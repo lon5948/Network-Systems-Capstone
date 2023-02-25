@@ -7,6 +7,7 @@ using namespace std;
 
 int main(int argc, const char * argv[]) {
     pcap_if_t *devices = NULL; 
+    char *interface = NULL;
     char errbuf[PCAP_ERRBUF_SIZE];
     char ntop_buf[256];
     struct ether_header *eptr;
@@ -16,7 +17,7 @@ int main(int argc, const char * argv[]) {
 
     for(int i = 1; i < argc; i+=2) {
         if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--interface"))
-            devices->name = argv[i+1];
+            interface = argv[i+1];
         else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--count"))
             count = stoi(argv[i+1]);
         else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--filter"))
@@ -27,7 +28,7 @@ int main(int argc, const char * argv[]) {
         }
     }
 
-    if(devices == NULL) {
+    if(interface == NULL) {
         printf("wrong command\n"); 
         exit(1);
     }
@@ -47,13 +48,14 @@ int main(int argc, const char * argv[]) {
     
     struct bpf_program fp; // for filter, compiled in "pcap_compile"
     pcap_t *handle;
-    handle = pcap_open_live({your_interface}, 65535, 1, 1, errbuf);  
+    handle = pcap_open_live(interface, 65535, 1, 1, errbuf);  
     //pcap_open_live(device, snaplen, promise, to_ms, errbuf), interface is your interface, type is "char *"   
     
     if(!handle || handle == NULL) {
         fprintf(stderr, "pcap_open_live(): %s\n", errbuf);
         exit(1);
     }
+    /*
     if(-1 == pcap_compile(handle, &fp, {your_filter}, 1, PCAP_NETMASK_UNKNOWN) ) { // compile "your filter" into a filter program, type of {your_filter} is "char *" 
         pcap_perror(handle, "pkg_compile compile error\n");
         exit(1);
@@ -62,7 +64,7 @@ int main(int argc, const char * argv[]) {
         pcap_perror(handle, "set filter error\n");
         exit(1);
     }
-
+    */
     while(1) {   
         const unsigned char* packet = pcap_next(handle, &header);
         cout << packet << endl;
