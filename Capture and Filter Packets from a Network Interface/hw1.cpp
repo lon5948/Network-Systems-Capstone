@@ -11,6 +11,7 @@ int main(int argc, const char * argv[]) {
     char errbuf[PCAP_ERRBUF_SIZE];
     char ntop_buf[256];
     struct ether_header *eptr;
+    struct pcap_pkthdr header;
     vector<pcap_if_t*> vec; // vec is a vector of pointers pointing to pcap_if_t 
     int count = -1;
     string filter = "all";
@@ -27,12 +28,12 @@ int main(int argc, const char * argv[]) {
             exit(1);
         }
     }
-
+    /*
     if(interface == NULL) {
         printf("wrong command\n"); 
         exit(1);
     }
-
+*/
     // get all devices 
     if(-1 == pcap_findalldevs(&devices, errbuf)) {
         fprintf(stderr, "pcap_findalldevs: %s\n", errbuf); // if error, fprint error message --> errbuf
@@ -55,16 +56,18 @@ int main(int argc, const char * argv[]) {
         fprintf(stderr, "pcap_open_live(): %s\n", errbuf);
         exit(1);
     }
-    /*
-    if(-1 == pcap_compile(handle, &fp, {your_filter}, 1, PCAP_NETMASK_UNKNOWN) ) { // compile "your filter" into a filter program, type of {your_filter} is "char *" 
-        pcap_perror(handle, "pkg_compile compile error\n");
-        exit(1);
+    
+    if(filter != "all") {
+        if(-1 == pcap_compile(handle, &fp, filter, 1, PCAP_NETMASK_UNKNOWN) ) { // compile "your filter" into a filter program, type of {your_filter} is "char *" 
+            pcap_perror(handle, "pkg_compile compile error\n");
+            exit(1);
+        }
+        if(-1 == pcap_setfilter(handle, &fp)) { // make it work
+            pcap_perror(handle, "set filter error\n");
+            exit(1);
+        }
     }
-    if(-1 == pcap_setfilter(handle, &fp)) { // make it work
-        pcap_perror(handle, "set filter error\n");
-        exit(1);
-    }
-    */
+    
     while(1) {   
         const unsigned char* packet = pcap_next(handle, &header);
         cout << packet << endl;
