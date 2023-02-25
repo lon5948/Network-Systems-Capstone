@@ -16,7 +16,7 @@ int main(int argc, const char * argv[]) {
 
     for(int i = 1; i < argc; i+=2) {
         if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--interface"))
-            devices = argv[i+1];
+            devices->name = argv[i+1];
         else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--count"))
             count = stoi(argv[i+1]);
         else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--filter"))
@@ -27,7 +27,7 @@ int main(int argc, const char * argv[]) {
         }
     }
 
-    if(device == NULL) {
+    if(devices == NULL) {
         printf("wrong command\n"); 
         exit(1);
     }
