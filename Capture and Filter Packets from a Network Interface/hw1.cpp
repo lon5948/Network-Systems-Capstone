@@ -7,7 +7,7 @@ using namespace std;
 
 int main(int argc, const char * argv[]) {
     pcap_if_t *devices = NULL; 
-    char *interface = NULL;
+    const char *interface = NULL;
     char errbuf[PCAP_ERRBUF_SIZE];
     char ntop_buf[256];
     struct ether_header *eptr;
