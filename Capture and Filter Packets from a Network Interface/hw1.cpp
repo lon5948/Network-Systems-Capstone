@@ -44,7 +44,7 @@ int main(int argc, const char * argv[]) {
         vec.push_back(d);
         cout << "Name: " << d->name << endl;
     }
-    /*
+    
     struct bpf_program fp; // for filter, compiled in "pcap_compile"
     pcap_t *handle;
     handle = pcap_open_live({your_interface}, 65535, 1, 1, errbuf);  
@@ -67,7 +67,7 @@ int main(int argc, const char * argv[]) {
         const unsigned char* packet = pcap_next(handle, &header);
         cout << packet << endl;
     }
-    */
+    
     pcap_freealldevs(devices);
     
     return 0;
