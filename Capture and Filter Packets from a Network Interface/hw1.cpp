@@ -12,14 +12,14 @@ int main(int argc, const char * argv[]) {
     struct ether_header *eptr;
     vector<pcap_if_t*> vec; // vec is a vector of pointers pointing to pcap_if_t 
     int count = -1;
-    string filter = 'all';
+    string filter = "all";
 
     for(int i = 1; i < argc; i+=2) {
-        if(argv[i] == '-i' || argv[i] == '--interface')
+        if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--interface"))
             devices = argv[i+1];
-        else if(argv[i] == '-c' || argv[i] == '--count')
+        else if(!strcmp(argv[i], "-c") || !strcmp(argv[i], "--count"))
             count = stoi(argv[i+1]);
-        else if(argv[i] == '-f' || argv[i] == '--filter')
+        else if(!strcmp(argv[i], "-f") || !strcmp(argv[i], "--filter"))
             filter = argv[i+1];
         else {
             printf("wrong command\n"); 
@@ -44,7 +44,7 @@ int main(int argc, const char * argv[]) {
         vec.push_back(d);
         cout << "Name: " << d->name << endl;
     }
-
+    /*
     struct bpf_program fp; // for filter, compiled in "pcap_compile"
     pcap_t *handle;
     handle = pcap_open_live({your_interface}, 65535, 1, 1, errbuf);  
@@ -67,7 +67,7 @@ int main(int argc, const char * argv[]) {
         const unsigned char* packet = pcap_next(handle, &header);
         cout << packet << endl;
     }
-
+    */
     pcap_freealldevs(devices);
     
     return 0;
