@@ -14,7 +14,7 @@ int main(int argc, const char * argv[]) {
     struct pcap_pkthdr header;
     vector<pcap_if_t*> vec; // vec is a vector of pointers pointing to pcap_if_t 
     int count = -1;
-    string filter = "all";
+    const char *filter = "all";
 
     for(int i = 1; i < argc; i+=2) {
         if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--interface"))
@@ -28,6 +28,7 @@ int main(int argc, const char * argv[]) {
             exit(1);
         }
     }
+    cout << interface << endl;
     /*
     if(interface == NULL) {
         printf("wrong command\n"); 
