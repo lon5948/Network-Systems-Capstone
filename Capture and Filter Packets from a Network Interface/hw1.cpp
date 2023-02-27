@@ -28,6 +28,7 @@ int main(int argc, const char * argv[]) {
             exit(1);
         }
     }
+    cout << interface << endl;
     /*
     if(interface == NULL) {
         printf("wrong command\n"); 
