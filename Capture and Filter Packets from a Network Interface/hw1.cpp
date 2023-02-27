@@ -7,6 +7,7 @@ using namespace std;
 
 #define ETHER_ADDR_LEN 6 /* Ethernet addresses are 6 bytes */
 #define SIZE_ETHERNET 14 /* ethernet headers are always exactly 14 bytes */
+#define SIZE_UDP 8 /* udp headers are always exactly 8 bytes */
 
 /* Ethernet header */
 struct sniff_ethernet {
@@ -21,7 +22,7 @@ struct sniff_ip {
 	u_char ip_tos;		/* type of service */
 	u_short ip_len;		/* total length */
 	u_short ip_id;		/* identification */
-	u_short ip_off;		/* fragment offset field */
+	u_short ip_off;		/* flags, fragment offset */
 #define IP_RF 0x8000		/* reserved fragment flag */
 #define IP_DF 0x4000		/* don't fragment flag */
 #define IP_MF 0x2000		/* more fragments flag */
@@ -31,24 +32,22 @@ struct sniff_ip {
 	u_short ip_sum;		/* checksum */
 	struct in_addr ip_src,ip_dst; /* source and dest address */
 };
-#define IP_HL(ip)		(((ip)->ip_vhl) & 0x0f)
-#define IP_V(ip)		(((ip)->ip_vhl) >> 4)
+#define IP_HL(ip) (((ip)->ip_vhl) & 0x0f)
+#define IP_V(ip)  (((ip)->ip_vhl) >> 4)
 
 /* TCP header */
-typedef u_int tcp_seq;
-
 struct sniff_tcp {
 	u_short th_sport;	/* source port */
 	u_short th_dport;	/* destination port */
-	tcp_seq th_seq;		/* sequence number */
-	tcp_seq th_ack;		/* acknowledgement number */
-	u_char th_offx2;	/* data offset, rsvd */
-#define TH_OFF(th)	(((th)->th_offx2 & 0xf0) > 4)
+	u_int th_seq;		/* sequence number */
+	u_int th_ack;		/* acknowledgement number */
+	u_char th_offx2;	/* data offset, reversed */
+#define TH_OFF(th)	(((th)->th_offx2 & 0xf0) >> 4)
 	u_char th_flags;
 #define TH_FIN 0x01
 #define TH_SYN 0x02
 #define TH_RST 0x04
-#define TH_PUSH 0x08
+#define TH_PSH 0x08
 #define TH_ACK 0x10
 #define TH_URG 0x20
 #define TH_ECE 0x40
@@ -59,11 +58,104 @@ struct sniff_tcp {
 	u_short th_urp;		/* urgent pointer */
 };
 
+/* UDP header */
+struct sniff_udp {
+    u_short uh_sport;    /* source port */
+    u_short uh_dport;    /* destination port */
+    u_short uh_len;      /* udp length */
+    u_short uh_sum;      /* udp checksum */
+};
+
+/* ICMP header */
+struct sniff_icmp {
+    u_char ih_type;     /* icmp type */
+    u_char ih_code;     /* icmp code */
+    u_short ih_sum;     /* icmp checksum */
+    u_int ih_roh;       /* icmp rest of header */
+};
+
+print_payload(const u_char *payload, int len) {
+    int len_rem = len;
+	int line_width = 16;			/* number of bytes per line */
+	int line_len;
+	int offset = 0;					/* zero-based offset counter */
+	const u_char *ch = payload;
+
+	if (len <= 0)
+		return;
+
+	/* data fits on one line */
+	if (len <= line_width) {
+		print_hex_ascii_line(ch, len, offset);
+		return;
+	}
+
+	/* data spans multiple lines */
+	while(1) {
+		line_len = line_width % len_rem; /* compute current line length */
+		print_hex_ascii_line(ch, line_len, offset); /* print line */
+		len_rem = len_rem - line_len; /* compute total remaining */
+		ch = ch + line_len; /* shift pointer to remaining bytes to print */
+		offset = offset + line_width; /* add offset */
+		/* check if we have line width chars or less */
+		if (len_rem <= line_width) {
+			/* print last line and get out */
+			print_hex_ascii_line(ch, len_rem, offset);
+			break;
+		}
+	}
+
+    return;
+}
+
+print_hex_ascii_line(const u_char *payload, int len, int offset) {
+
+	int i;
+	int gap;
+	const u_char *ch;
+
+	/* offset */
+	printf("%05d   ", offset);
+
+	/* hex */
+	ch = payload;
+	for(i = 0; i < len; i++) {
+		printf("%02x ", *ch);
+		ch++;
+		/* print extra space after 8th byte for visual aid */
+		if (i == 7)
+			printf(" ");
+	}
+	/* print space to handle line less than 8 bytes */
+	if (len < 8)
+		printf(" ");
+
+	/* fill hex gap with spaces if not full line */
+	if (len < 16) {
+		gap = 16 - len;
+		for (i = 0; i < gap; i++) {
+			printf(" ");
+		}
+	}
+	printf(" ");
+
+	/* ascii (if printable) */
+	ch = payload;
+	for(i = 0; i < len; i++) {
+		if (isprint(*ch))
+			printf("%c", *ch);
+		else
+			printf(".");
+		ch++;
+	}
+
+    return;
+}
+
 int main(int argc, const char * argv[]) {
     pcap_if_t *devices = NULL; 
     const char *interface = NULL;
     char errbuf[PCAP_ERRBUF_SIZE];
-    //char ntop_buf[256];
     struct ether_header *eptr;
     struct pcap_pkthdr header;
     vector<pcap_if_t*> vec; // vec is a vector of pointers pointing to pcap_if_t 
@@ -111,76 +203,72 @@ int main(int argc, const char * argv[]) {
         exit(1);
     }
     
-    if(filter != "all") {
-        if(-1 == pcap_compile(handle, &fp, filter, 1, PCAP_NETMASK_UNKNOWN) ) { // compile "your filter" into a filter program, type of {your_filter} is "char *" 
-            pcap_perror(handle, "pkg_compile compile error\n");
-            exit(1);
-        }
-        if(-1 == pcap_setfilter(handle, &fp)) { // make it work
-            pcap_perror(handle, "set filter error\n");
-            exit(1);
-        }
+    if(filter == "all")
+        filter = "ip"; 
+    if(-1 == pcap_compile(handle, &fp, filter, 1, PCAP_NETMASK_UNKNOWN) ) { // compile "your filter" into a filter program, type of {your_filter} is "char *" 
+        pcap_perror(handle, "pkg_compile compile error\n");
+        exit(1);
+    }
+    if(-1 == pcap_setfilter(handle, &fp)) { // make it work
+        pcap_perror(handle, "set filter error\n");
+        exit(1);
     }
     
-    bpf_u_int32 mask;
-    bpf_u_int32 net;
     const struct sniff_ethernet *ethernet; /* The ethernet header */
     const struct sniff_ip *ip; /* The IP header */
     const struct sniff_tcp *tcp; /* The TCP header */
+    const struct sniff_udp *udp; /* The UDP header */
+    const struct sniff_icmp *icmp; /* The ICMP header */
     const char *payload; /* Packet payload */
-    u_int size_ip;
-    u_int size_tcp;
+    int size_ip;
+    int size_tcp;
+    int size_payload;
 
     while(count-- != 0) {   
         const unsigned char* packet = pcap_next(handle, &header);
         ethernet = (struct sniff_ethernet*)(packet);
         ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
         size_ip = IP_HL(ip)*4;
-        tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
-        size_tcp = TH_OFF(tcp)*4;
-        payload = (char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
-	if(ip->ip_p == 1) {
-	    printf("Transport type: ICMP\n");
-	    printf("Source IP: \n");
-	    printf("Destination IP: \n");
-	    printf("ICMP type value: \n");
-	}
-	else if(ip->ip_p == 17) {
-            printf("Transport type: UDP\n");
-	    printf("Source IP: %d\n", ethernet->ether_shost[ETHER_ADDR_LEN]);
-            printf("Destination IP: %d\n", ethernet->ether_dhost[ETHER_ADDR_LEN]);
-            printf("Source port: %d\n", tcp->th_sport);
-            printf("Destination port: %d\n", tcp->th_dport);
-            int len = strlen(payload);
-            char hex_payload[len*3];
-            int p = 0, h = 0;
-            while(payload[p] != '\0') {
-                sprintf((char*)(hex_payload+h), "%02X", payload[p]);
-                p++;
-                h += 3;
-            }
-            hex_payload[h] = '\0';
-            printf("Payload: %s\n\n", hex_payload);
-	}
-	else if(ip->ip_p == 6) {
-	    printf("Transport type: TCP\n");
-            printf("Source IP: %d\n", ethernet->ether_shost[ETHER_ADDR_LEN]);
-            printf("Destination IP: %d\n", ethernet->ether_dhost[ETHER_ADDR_LEN]);
-            printf("Source port: %d\n", tcp->th_sport);
-            printf("Destination port: %d\n", tcp->th_dport);
-	    int len = strlen(payload);
-	    char hex_payload[len*3];
-	    int p = 0, h = 0;
-	    while(payload[p] != '\0') {
-	    	sprintf((char*)(hex_payload+h), "%03X", payload[p]);
-		p++;
-		h += 3;
-            }
-	    hex_payload[h] = '\0';
-            printf("Payload: %s\n\n", hex_payload);
-	}
+
+        switch(ip->ip_p) {
+            case IPPROTO_ICMP:
+                icmp = (struct sniff_icmp*)(packet + SIZE_ETHERNET + size_ip);
+                printf("Transport type: ICMP\n");
+                printf("Source IP: %s\n", inet_ntoa(ip->ip_src));
+                printf("Destination IP: %s\n", inet_ntoa(ip->ip_dst));
+                printf("ICMP type value: %s\n", icmp->ih_type);
+                break;
+            case IPPROTO_UDP:
+                udp = (struct sniff_udp*)(packet + SIZE_ETHERNET + size_ip);
+                payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + SIZE_UDP);
+                size_payload = ntohs(ip->ip_len) - (size_ip + SIZE_UDP);
+                printf("Transport type: UDP\n");
+                printf("Source IP: %s\n", inet_ntoa(ip->ip_src));
+                printf("Destination IP: %s\n", inet_ntoa(ip->ip_dst));
+                printf("Source port: %d\n", udp->uh_sport);
+                printf("Destination port: %d\n", udp->uh_dport);
+                printf("Payload: ");
+                print_payload(payload, size_payload);
+                printf("\n");
+                break;
+            case IPPROTO_TCP:
+                tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
+                size_tcp = TH_OFF(tcp)*4;
+                payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
+                size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
+                printf("Transport type: TCP\n");
+                printf("Source IP: %s\n", inet_ntoa(ip->ip_src));
+                printf("Destination IP: %s\n", inet_ntoa(ip->ip_dst));
+                printf("Source port: %d\n", tcp->th_sport);
+                printf("Destination port: %d\n", tcp->th_dport);
+                printf("Payload: ");
+                print_payload(payload, size_payload);
+                printf("\n");
+                break;
+        }
+        printf("\n");
     }
-    
+
     pcap_freealldevs(devices);
     
     return 0;
