@@ -68,7 +68,7 @@ int main(int argc, const char * argv[]) {
     struct pcap_pkthdr header;
     vector<pcap_if_t*> vec; // vec is a vector of pointers pointing to pcap_if_t 
     int count = -1;
-    char filter[] = "all";
+    const char *filter = "all";
 
     for(int i = 1; i < argc; i+=2) {
         if(!strcmp(argv[i], "-i") || !strcmp(argv[i], "--interface"))
@@ -83,9 +83,8 @@ int main(int argc, const char * argv[]) {
         }
     }
     
-    interface = pcap_lookupdev(errbuf);
     if(interface == NULL) {
-        fprintf(stderr, "pcap_lookupdev: %s\n", errbuf);
+        printf("wrong command.\n");
         exit(1);
     }
     
@@ -137,23 +136,49 @@ int main(int argc, const char * argv[]) {
         ethernet = (struct sniff_ethernet*)(packet);
         ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
         size_ip = IP_HL(ip)*4;
-        if (size_ip < 20) {
-            printf("Invalid IP header length: %u bytes\n", size_ip);
-            return 0;
-        }
         tcp = (struct sniff_tcp*)(packet + SIZE_ETHERNET + size_ip);
         size_tcp = TH_OFF(tcp)*4;
-        if (size_tcp < 20) {
-            printf("Invalid TCP header length: %u bytes\n", size_tcp);
-            return 0;
-        }
-        payload = (u_char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
-        printf("Transport type: %d\n", ip->ip_p);
-        printf("Source IP: %d\n", ethernet->ether_shost[ETHER_ADDR_LEN]);
-        printf("Destination IP: %d\n", ethernet->ether_dhost[ETHER_ADDR_LEN]);
-        printf("Source port: %d\n", tcp->th_sport);
-        printf("Destination port: %d\n", tcp->th_dport);
-        printf("Payload: %d\n", payload);
+        payload = (char *)(packet + SIZE_ETHERNET + size_ip + size_tcp);
+	if(ip->ip_p == 1) {
+	    printf("Transport type: ICMP\n");
+	    printf("Source IP: \n");
+	    printf("Destination IP: \n");
+	    printf("ICMP type value: \n");
+	}
+	else if(ip->ip_p == 17) {
+            printf("Transport type: UDP\n");
+	    printf("Source IP: %d\n", ethernet->ether_shost[ETHER_ADDR_LEN]);
+            printf("Destination IP: %d\n", ethernet->ether_dhost[ETHER_ADDR_LEN]);
+            printf("Source port: %d\n", tcp->th_sport);
+            printf("Destination port: %d\n", tcp->th_dport);
+            int len = strlen(payload);
+            char hex_payload[len*3];
+            int p = 0, h = 0;
+            while(payload[p] != '\0') {
+                sprintf((char*)(hex_payload+h), "%02X", payload[p]);
+                p++;
+                h += 3;
+            }
+            hex_payload[h] = '\0';
+            printf("Payload: %s\n\n", hex_payload);
+	}
+	else if(ip->ip_p == 6) {
+	    printf("Transport type: TCP\n");
+            printf("Source IP: %d\n", ethernet->ether_shost[ETHER_ADDR_LEN]);
+            printf("Destination IP: %d\n", ethernet->ether_dhost[ETHER_ADDR_LEN]);
+            printf("Source port: %d\n", tcp->th_sport);
+            printf("Destination port: %d\n", tcp->th_dport);
+	    int len = strlen(payload);
+	    char hex_payload[len*3];
+	    int p = 0, h = 0;
+	    while(payload[p] != '\0') {
+	    	sprintf((char*)(hex_payload+h), "%03X", payload[p]);
+		p++;
+		h += 3;
+            }
+	    hex_payload[h] = '\0';
+            printf("Payload: %s\n\n", hex_payload);
+	}
     }
     
     pcap_freealldevs(devices);
