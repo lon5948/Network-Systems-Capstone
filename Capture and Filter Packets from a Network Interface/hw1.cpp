@@ -75,13 +75,10 @@ struct sniff_icmp {
 };
 
 void print_payload(const u_char *payload, int len) {
-	int i;
-	int gap;
-	const u_char *ch;
-	ch = payload;
+	const u_char *ch = payload;
     if(len > 16)
         len = 16;
-	for(i = 0; i < len; i++) {
+	for(int i = 0; i < len; i++) {
 		printf("%02x ", *ch);
 		ch++;
 	}
@@ -160,7 +157,7 @@ int main(int argc, const char * argv[]) {
     int size_tcp;
     int size_payload;
 
-    while(count-- != 0) {   
+    while(count != 0) {   
         const unsigned char* packet = pcap_next(handle, &header);
         ethernet = (struct sniff_ethernet*)(packet);
         ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
@@ -203,6 +200,7 @@ int main(int argc, const char * argv[]) {
                 break;
         }
         printf("\n");
+        count--;
     }
 
     pcap_freealldevs(devices);
