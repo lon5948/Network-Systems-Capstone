@@ -75,72 +75,16 @@ struct sniff_icmp {
 };
 
 print_payload(const u_char *payload, int len) {
-    int len_rem = len;
-	int line_width = 16;			/* number of bytes per line */
-	int line_len;
-	const u_char *ch = payload;
-
-	if (len <= 0)
-		return;
-
-	/* data fits on one line */
-	if (len <= line_width) {
-		print_hex_ascii_line(ch, len);
-		return;
-	}
-
-	/* data spans multiple lines */
-	while(1) {
-		line_len = line_width % len_rem; /* compute current line length */
-		print_hex_ascii_line(ch, line_len); /* print line */
-		len_rem = len_rem - line_len; /* compute total remaining */
-		ch = ch + line_len; /* shift pointer to remaining bytes to print */
-		/* check if we have line width chars or less */
-		if (len_rem <= line_width) {
-			/* print last line and get out */
-			print_hex_ascii_line(ch, len_rem);
-			break;
-		}
-	}
-
-    return;
-}
-
-print_hex_ascii_line(const u_char *payload, int len) {
 	int i;
 	int gap;
 	const u_char *ch;
 	ch = payload;
+    if(len > 16)
+        len = 16;
 	for(i = 0; i < len; i++) {
 		printf("%02x ", *ch);
 		ch++;
-		/* print extra space after 8th byte for visual aid */
-		if (i == 7)
-			printf(" ");
 	}
-	/* print space to handle line less than 8 bytes */
-	if (len < 8)
-		printf(" ");
-
-	/* fill hex gap with spaces if not full line */
-	if (len < 16) {
-		gap = 16 - len;
-		for (i = 0; i < gap; i++) {
-			printf(" ");
-		}
-	}
-	printf(" ");
-
-	/* ascii (if printable) */
-	ch = payload;
-	for(i = 0; i < len; i++) {
-		if (isprint(*ch))
-			printf("%c", *ch);
-		else
-			printf(".");
-		ch++;
-	}
-
     return;
 }
 
