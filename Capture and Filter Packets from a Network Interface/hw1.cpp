@@ -178,8 +178,8 @@ int main(int argc, const char * argv[]) {
                 printf("Transport type: UDP\n");
                 printf("Source IP: %s\n", inet_ntoa(ip->ip_src));
                 printf("Destination IP: %s\n", inet_ntoa(ip->ip_dst));
-                printf("Source port: %s\n", htons(udp->uh_sport));
-                printf("Destination port: %s\n", htons(udp->uh_dport));
+                printf("Source port: %d\n", htons(udp->uh_sport));
+                printf("Destination port: %d\n", htons(udp->uh_dport));
                 printf("Payload: ");
                 print_payload(payload, size_payload);
                 printf("\n");
@@ -192,8 +192,8 @@ int main(int argc, const char * argv[]) {
                 printf("Transport type: TCP\n");
                 printf("Source IP: %s\n", inet_ntoa(ip->ip_src));
                 printf("Destination IP: %s\n", inet_ntoa(ip->ip_dst));
-                printf("Source port: %s\n", htons(tcp->th_sport));
-                printf("Destination port: %s\n", htons(tcp->th_dport));
+                printf("Source port: %d\n", htons(tcp->th_sport));
+                printf("Destination port: %d\n", htons(tcp->th_dport));
                 printf("Payload: ");
                 print_payload(payload, size_payload);
                 printf("\n");
