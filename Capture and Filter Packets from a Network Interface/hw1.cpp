@@ -78,7 +78,6 @@ print_payload(const u_char *payload, int len) {
     int len_rem = len;
 	int line_width = 16;			/* number of bytes per line */
 	int line_len;
-	int offset = 0;					/* zero-based offset counter */
 	const u_char *ch = payload;
 
 	if (len <= 0)
@@ -86,21 +85,20 @@ print_payload(const u_char *payload, int len) {
 
 	/* data fits on one line */
 	if (len <= line_width) {
-		print_hex_ascii_line(ch, len, offset);
+		print_hex_ascii_line(ch, len);
 		return;
 	}
 
 	/* data spans multiple lines */
 	while(1) {
 		line_len = line_width % len_rem; /* compute current line length */
-		print_hex_ascii_line(ch, line_len, offset); /* print line */
+		print_hex_ascii_line(ch, line_len); /* print line */
 		len_rem = len_rem - line_len; /* compute total remaining */
 		ch = ch + line_len; /* shift pointer to remaining bytes to print */
-		offset = offset + line_width; /* add offset */
 		/* check if we have line width chars or less */
 		if (len_rem <= line_width) {
 			/* print last line and get out */
-			print_hex_ascii_line(ch, len_rem, offset);
+			print_hex_ascii_line(ch, len_rem);
 			break;
 		}
 	}
@@ -108,16 +106,10 @@ print_payload(const u_char *payload, int len) {
     return;
 }
 
-print_hex_ascii_line(const u_char *payload, int len, int offset) {
-
+print_hex_ascii_line(const u_char *payload, int len) {
 	int i;
 	int gap;
 	const u_char *ch;
-
-	/* offset */
-	printf("%05d   ", offset);
-
-	/* hex */
 	ch = payload;
 	for(i = 0; i < len; i++) {
 		printf("%02x ", *ch);
