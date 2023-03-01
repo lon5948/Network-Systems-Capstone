@@ -74,7 +74,7 @@ struct sniff_icmp {
     u_int ih_roh;       /* icmp rest of header */
 };
 
-print_payload(const u_char *payload, int len) {
+void print_payload(const u_char *payload, int len) {
 	int i;
 	int gap;
 	const u_char *ch;
@@ -155,7 +155,7 @@ int main(int argc, const char * argv[]) {
     const struct sniff_tcp *tcp; /* The TCP header */
     const struct sniff_udp *udp; /* The UDP header */
     const struct sniff_icmp *icmp; /* The ICMP header */
-    const char *payload; /* Packet payload */
+    const u_char *payload; /* Packet payload */
     int size_ip;
     int size_tcp;
     int size_payload;
@@ -172,7 +172,7 @@ int main(int argc, const char * argv[]) {
                 printf("Transport type: ICMP\n");
                 printf("Source IP: %s\n", inet_ntoa(ip->ip_src));
                 printf("Destination IP: %s\n", inet_ntoa(ip->ip_dst));
-                printf("ICMP type value: %s\n", icmp->ih_type);
+                printf("ICMP type value: %d\n", icmp->ih_type);
                 break;
             case IPPROTO_UDP:
                 udp = (struct sniff_udp*)(packet + SIZE_ETHERNET + size_ip);
