@@ -123,7 +123,7 @@ int main(int argc, const char * argv[]) {
     int cnt = 0;
     for(pcap_if_t *d = devices; d ; d = d->next, cnt++) {
         vec.push_back(d);
-        cout << "Name: " << d->name << endl;
+        //cout << "Name: " << d->name << endl;
     }
     
     struct bpf_program fp; // for filter, compiled in "pcap_compile"
