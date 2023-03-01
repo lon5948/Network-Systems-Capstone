@@ -136,7 +136,7 @@ int main(int argc, const char * argv[]) {
         exit(1);
     }
     
-    if(filter == "all")
+    if(!strcmp(filter, "all"))
         filter = "ip"; 
     if(-1 == pcap_compile(handle, &fp, filter, 1, PCAP_NETMASK_UNKNOWN) ) { // compile "your filter" into a filter program, type of {your_filter} is "char *" 
         pcap_perror(handle, "pkg_compile compile error\n");
