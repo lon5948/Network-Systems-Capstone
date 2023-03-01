@@ -76,8 +76,8 @@ struct sniff_icmp {
 
 void print_payload(const u_char *payload, int len) {
 	const u_char *ch = payload;
-    if(len > 16)
-        len = 16;
+    if(len > 16) len = 16;
+    else len--;
 	for(int i = 0; i < len; i++) {
 		printf("%02x ", *ch);
 		ch++;
@@ -178,8 +178,8 @@ int main(int argc, const char * argv[]) {
                 printf("Transport type: UDP\n");
                 printf("Source IP: %s\n", inet_ntoa(ip->ip_src));
                 printf("Destination IP: %s\n", inet_ntoa(ip->ip_dst));
-                printf("Source port: %d\n", udp->uh_sport);
-                printf("Destination port: %d\n", udp->uh_dport);
+                printf("Source port: %s\n", htons(udp->uh_sport));
+                printf("Destination port: %s\n", htons(udp->uh_dport));
                 printf("Payload: ");
                 print_payload(payload, size_payload);
                 printf("\n");
@@ -192,8 +192,8 @@ int main(int argc, const char * argv[]) {
                 printf("Transport type: TCP\n");
                 printf("Source IP: %s\n", inet_ntoa(ip->ip_src));
                 printf("Destination IP: %s\n", inet_ntoa(ip->ip_dst));
-                printf("Source port: %d\n", tcp->th_sport);
-                printf("Destination port: %d\n", tcp->th_dport);
+                printf("Source port: %s\n", htons(tcp->th_sport));
+                printf("Destination port: %s\n", htons(tcp->th_dport));
                 printf("Payload: ");
                 print_payload(payload, size_payload);
                 printf("\n");
