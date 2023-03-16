@@ -62,10 +62,7 @@ def set_topology():
 
     # create nodes and links
     for h in hostlist:
-        h_ip = ip_dic[h]
-        h_mac = mac_dic[h]
-        h_object = host(h, h_ip, h_mac)
-        host_dict[h] = h_object
+        host_dict[h] = host(h, ip_dic[h], mac_dic[h])
     
     for l in linklist:
         pair = l.split(',')
@@ -77,9 +74,7 @@ def set_topology():
         link_dict[pair[1]].append(pair[0])
     
     for s in switchlist:
-        s_portn = len(link_dict[s])
-        s_object = switch(s, s_portn)
-        switch_dict[s] = s_object
+        switch_dict[s] = switch(s, len(link_dict[s]))
 
     
 
