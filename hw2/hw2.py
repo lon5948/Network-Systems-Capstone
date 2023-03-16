@@ -90,16 +90,29 @@ def ping(tmp1, tmp2): # initiate a ping between two hosts
 
 def show_table(tmp): # display the ARP or MAC table of a node
     # ...
+    return
 
 
 def clear():
     # ...
-
+    return
 
 def run_net():
     while(1):
         command_line = input(">> ")
-        # ... handle user commands
+        # handle user commands
+        command_line = command_line.split(' ')
+        if len(command_line) == 3 and command_line[1] == "ping":
+            ping(command_line[0], command_line[2])
+        elif len(command_line) == 2 and command_line[0] == "show_table":
+            if command_line[1] == "all_hosts":
+                for h in get_hosts():
+                    show_table(h)
+            elif command_line[1] == "all_switches":
+                for s in get_switches:
+                    show_table(s)
+            else:
+                show_table(command_line[1])
 
     
 def main():
