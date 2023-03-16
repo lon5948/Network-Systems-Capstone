@@ -46,19 +46,42 @@ class switch:
 
 def add_link(tmp1, tmp2): # create a link between two nodes
     # ...
+    return
 
 def set_topology():
-    global host_dict, switch_dict
+    global host_dict, switch_dict, link_dict
     hostlist = get_hosts().split(' ')
     switchlist = get_switches().split(' ')
-    link_command = get_links()
+    linklist = get_links().split(' ')
     ip_dic = get_ip()
     mac_dic = get_mac()
-    
+
     host_dict = dict() # maps host names to host objects
     switch_dict = dict() # maps switch names to switch objects
+    link_dict = dict() # maps switch/hosts names to neighbors
+
+    # create nodes and links
+    for h in hostlist:
+        h_ip = ip_dic[h]
+        h_mac = mac_dic[h]
+        h_object = host(h, h_ip, h_mac)
+        host_dict[h] = h_object
     
-    # ... create nodes and links
+    for l in linklist:
+        pair = l.split(',')
+        if pair[0] not in link_dict:
+            link_dict[pair[0]] = list()
+        link_dict[pair[0]].append(pair[1])
+        if pair[1] not in link_dict:
+            link_dict[pair[1]] = list()
+        link_dict[pair[1]].append(pair[0])
+    
+    for s in switchlist:
+        s_portn = len(link_dict[s])
+        s_object = switch(s, s_portn)
+        switch_dict[s] = s_object
+
+    
 
 def ping(tmp1, tmp2): # initiate a ping between two hosts
     global host_dict, switch_dict
