@@ -113,6 +113,10 @@ def run_net():
                     show_table(s)
             else:
                 show_table(command_line[1])
+        elif len(command_line) == 2 and command_line[0] == "clear":
+            clear(command_line[0])
+        else:
+            print("a wrong command\n")
 
     
 def main():
