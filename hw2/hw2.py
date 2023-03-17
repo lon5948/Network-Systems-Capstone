@@ -9,19 +9,27 @@ class host:
         self.arp_table = dict() # maps IP addresses to MAC addresses
     def add(self, node):
         self.port_to = node
-    def show_table(self):
-        # display ARP table entries for this host
-    def clear(self):
-        # clear ARP table entries for this host
-    def update_arp(self, ...):
-        # update ARP table with a new entry
-    def handle_packet(self, ...): # handle incoming packets
-        # ...
-    def ping(self, dst_ip, ...): # handle a ping request
-        # ...
-    def send(self, ...):
+    def show_table(self): # display ARP table entries for this host
+        print("---------------", self.name, ":\n")
+        for keys, values in self.arp_table.items():
+            print(keys, ":", values, end="\n")
+    def clear(self): # clear ARP table entries for this host
+        self.arp_table.clear()
+    def update_arp(self, ip, mac): # update ARP table with a new entry
+        self.arp_table[ip] = mac
+    def handle_packet(self, src_ip, src_mac, dst_ip, dst_mac): # handle incoming packets
+        self.update_arp(src_ip, src_mac)
+        if dst_ip == self.ip:
+            self.update_arp(src_ip, src_mac)
+            self.send(src_ip, src_mac, dst_ip, dst_mac)
+    def ping(self, dst_ip): # handle a ping request
+        if(dst_ip in self.arp_table):
+            self.send(self.ip, self.mac, dst_ip, self.arp_table[dst_ip])
+        else:
+            self.send(self.ip, self.mac, dst_ip, 'ffff')
+    def send(self, src_ip, src_mac, dst_ip, dst_mac):
         node = self.port_to # get node connected to this host
-        node.handle_packet(...) # send packet to the connected node
+        node.handle_packet(src_ip, src_mac, dst_ip, dst_mac) # send packet to the connected node
 
 class switch:
     def __init__(self, name, port_n):
@@ -31,25 +39,38 @@ class switch:
         self.port_to = list() 
     def add(self, node): # link with other hosts or switches
         self.port_to.append(node)
-    def show_table(self):
-        # display MAC table entries for this switch
-    def clear(self):
-        # clear MAC table entries for this switch
-    def update_mac(self, ...):
-        # update MAC table with a new entry
-    def send(self, idx, ...): # send to the specified port
+        self.port_n = self.port_n + 1
+    def show_table(self): # display MAC table entries for this switch
+        print("---------------", self.name, ":\n")
+        for keys, values in self.mac_table.items():
+            print(keys, ":", values, end="\n")
+    def clear(self): # clear MAC table entries for this switch
+        self.mac_table.clear()
+    def update_mac(self, mac, port): # update MAC table with a new entry
+        self.mac_table[mac] = port
+    def send(self, idx, src_ip, src_mac, dst_ip, dst_mac): # send to the specified port
         node = self.port_to[idx] 
-        node.handle_packet(...) 
-    def handle_packet(self, ...): # handle incoming packets
-        # ...
+        node.handle_packet(src_ip, src_mac, dst_ip, dst_mac) 
+    def handle_packet(self, src_ip, src_mac, dst_ip, dst_mac): # handle incoming packets
+        port = self.port_to.index(src_mac)
+        self.update_mac(src_mac, port)
+        if dst_mac == "ffff":
+            for i in range(self.port_n):
+                self.send(i, src_ip, src_mac, dst_ip, dst_mac)
+        elif dst_mac in self.mac_table:
+            self.send(self.mac_table[dst_mac], src_ip, src_mac, dst_ip, dst_mac) 
+        else:
+            for i in range(self.port_n):
+                if i != port:
+                    self.send(i, src_ip, src_mac, dst_ip, dst_mac)
 
 
 def add_link(tmp1, tmp2): # create a link between two nodes
-    # ...
-    return
+    tmp1.add()
+    tmp2.add()
 
 def set_topology():
-    global host_dict, switch_dict, link_dict
+    global host_dict, switch_dict
     hostlist = get_hosts().split(' ')
     switchlist = get_switches().split(' ')
     linklist = get_links().split(' ')
@@ -58,24 +79,17 @@ def set_topology():
 
     host_dict = dict() # maps host names to host objects
     switch_dict = dict() # maps switch names to switch objects
-    link_dict = dict() # maps switch/hosts names to neighbors
 
     # create nodes and links
     for h in hostlist:
         host_dict[h] = host(h, ip_dic[h], mac_dic[h])
     
+    for s in switchlist:
+        switch_dict[s] = switch(s, 0)
+
     for l in linklist:
         pair = l.split(',')
-        if pair[0] not in link_dict:
-            link_dict[pair[0]] = list()
-        link_dict[pair[0]].append(pair[1])
-        if pair[1] not in link_dict:
-            link_dict[pair[1]] = list()
-        link_dict[pair[1]].append(pair[0])
-    
-    for s in switchlist:
-        switch_dict[s] = switch(s, len(link_dict[s]))
-
+        add_link(pair[0], pair[1])
     
 
 def ping(tmp1, tmp2): # initiate a ping between two hosts
@@ -84,18 +98,15 @@ def ping(tmp1, tmp2): # initiate a ping between two hosts
         node1 = host_dict[tmp1]
         node2 = host_dict[tmp2]
         node1.ping(node2.ip)
-    else : 
-        # invalid command
+    else:
+        print("a wrong command\n")
 
 
 def show_table(tmp): # display the ARP or MAC table of a node
-    # ...
-    return
+    tmp.show_table()
 
-
-def clear():
-    # ...
-    return
+def clear(tmp): # clear the ARP or MAC table of a node
+    tmp.clear()
 
 def run_net():
     while(1):
@@ -106,23 +117,27 @@ def run_net():
             ping(command_line[0], command_line[2])
         elif len(command_line) == 2 and command_line[0] == "show_table":
             if command_line[1] == "all_hosts":
+                print("ip : mac")
                 for h in get_hosts():
                     show_table(h)
             elif command_line[1] == "all_switches":
+                print("mac : port")
                 for s in get_switches:
                     show_table(s)
-            else:
+            elif(command_line[1][0] == "h"):
+                print("ip : mac")
+                show_table(command_line[1])
+            elif(command_line[1][0] == "s"):
+                print("mac : port")
                 show_table(command_line[1])
         elif len(command_line) == 2 and command_line[0] == "clear":
             clear(command_line[0])
         else:
             print("a wrong command\n")
-
     
 def main():
     set_topology()
     run_net()
-
 
 if __name__ == '__main__':
     main()
