@@ -17,19 +17,24 @@ class host:
         self.arp_table.clear()
     def update_arp(self, ip, mac): # update ARP table with a new entry
         self.arp_table[ip] = mac
-    def handle_packet(self, hostname, src_ip, src_mac, dst_ip, dst_mac): # handle incoming packets
-        if dst_ip == self.ip: # ARP request
-            self.update_arp(src_ip, src_mac)
-            if dst_mac == "ffff":
-                self.send(self.name, self.ip, self.mac, src_ip, src_mac)
+    def handle_packet(self, hostname, src_ip, src_mac, dst_ip, dst_mac, type): # handle incoming packets
+        if self.ip == dst_ip:
+            if type == "ARPreq" and dst_mac == "ffff": # ARP request
+                self.update_arp(src_ip, src_mac)
+                self.send(self.name, self.ip, self.mac, src_ip, src_mac, "ARPre")
+            elif type == "ARPre": # ARP reply
+                self.update_arp(src_ip, src_mac)
+                self.send(self.name, self.ip, self.mac, src_ip, src_mac, "ICMPreq")
+            elif type == "ICMPreq": # ICMP request
+                self.send(self.name, self.ip, self.mac, src_ip, src_mac, "ICMPre")
     def ping(self, dst_ip): # handle a ping request
         if(dst_ip in self.arp_table):
-            self.send(self.name, self.ip, self.mac, dst_ip, self.arp_table[dst_ip])
+            self.send(self.name, self.ip, self.mac, dst_ip, self.arp_table[dst_ip], "ARPreq")
         else:
-            self.send(self.name, self.ip, self.mac, dst_ip, "ffff")
-    def send(self, hostname, src_ip, src_mac, dst_ip, dst_mac):
+            self.send(self.name, self.ip, self.mac, dst_ip, "ffff", "ARPreq")
+    def send(self, hostname, src_ip, src_mac, dst_ip, dst_mac, type):
         node = self.port_to # get node connected to this host
-        node.handle_packet(hostname, src_ip, src_mac, dst_ip, dst_mac) # send packet to the connected node
+        node.handle_packet(hostname, src_ip, src_mac, dst_ip, dst_mac, type) # send packet to the connected node
 
 class switch:
     def __init__(self, name, port_n):
@@ -48,29 +53,26 @@ class switch:
         self.mac_table.clear()
     def update_mac(self, mac, port): # update MAC table with a new entry
         self.mac_table[mac] = port
-    def send(self, idx, hostname, src_ip, src_mac, dst_ip, dst_mac): # send to the specified port
+    def send(self, idx, hostname, src_ip, src_mac, dst_ip, dst_mac, type): # send to the specified port
         node = self.port_to[idx] 
-        node.handle_packet(hostname, src_ip, src_mac, dst_ip, dst_mac) 
-    def handle_packet(self, hostname, src_ip, src_mac, dst_ip, dst_mac): # handle incoming packets
+        node.handle_packet(hostname, src_ip, src_mac, dst_ip, dst_mac, type) 
+    def handle_packet(self, hostname, src_ip, src_mac, dst_ip, dst_mac, type): # handle incoming packets
         port = 0
         if hostname in host_dict:
             port = self.port_to.index(host_dict[hostname])
         elif hostname in switch_dict:
             port = self.port_to.index(switch_dict[hostname])
         self.update_mac(src_mac, port)
-        if dst_mac == "ffff":
-            #print("broadcast")
+        if dst_mac == "ffff":    # broadcast
             for i in range(self.port_n):
                 if i != port:
-                    self.send(i, self.name, src_ip, src_mac, dst_ip, dst_mac)
+                    self.send(i, self.name, src_ip, src_mac, dst_ip, dst_mac, type)
         elif dst_mac in self.mac_table:
-            #print(self.mac_table[dst_mac])
-            self.send(self.mac_table[dst_mac], self.name, src_ip, src_mac, dst_ip, dst_mac) 
-        else:
-            #print("flooding")
+            self.send(self.mac_table[dst_mac], self.name, src_ip, src_mac, dst_ip, dst_mac, type) 
+        else:   # flooding
             for i in range(self.port_n):
                 if i != port:
-                    self.send(i, self.name, src_ip, src_mac, dst_ip, dst_mac)
+                    self.send(i, self.name, src_ip, src_mac, dst_ip, dst_mac, type)
 
 
 def add_link(tmp1, tmp2): # create a link between two nodes
