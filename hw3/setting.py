@@ -6,10 +6,12 @@ class Setting():
         self.packet_num = packet_num # 每個 host 生成的封包數量
         # packet time是完成一個封包所需的時間，包含了送packet的link delay和ack的link delay
         # 假設等待ack的時間等同於link delay
+        self.packet_size = packet_size
         self.packet_time = packet_size + 2*link_delay # 每個封包完成所需要的時間，等同於slotted aloha的slote size
         self.max_colision_wait_time = max_colision_wait_time # ALOHA, CSMA, CSMA/cD 重新發送封包的最大等待時間
         self.p_resend = p_resend # slotted aloha 每個slot開始時，重送封包的機率
         self.link_delay = link_delay # link delay
+        self.packets = self.gen_packets()
         if seed is None:
             self.seed = random.randint(1, 10000)
         else:
