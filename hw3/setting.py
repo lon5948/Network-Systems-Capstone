@@ -11,11 +11,12 @@ class Setting():
         self.max_colision_wait_time = max_colision_wait_time # ALOHA, CSMA, CSMA/cD 重新發送封包的最大等待時間
         self.p_resend = p_resend # slotted aloha 每個slot開始時，重送封包的機率
         self.link_delay = link_delay # link delay
-        self.packets = self.gen_packets()
+        self.seed = seed
         if seed is None:
-            self.seed = random.randint(1, 10000)
+            self.seed = random.randint(1, 10000) 
         else:
             self.seed = seed # seed 用於 random，同樣的 seed 會有相同的結果
+        self.packets = self.gen_packets()
 
     # hosts產生封包的時間
     # e.g.
