@@ -174,18 +174,15 @@ def csma(setting, show_history=False):
     packet_come = [[] for i in range(setting.host_num)]
     packet_num = [0 for i in range(setting.host_num)]
     sending_time = [0 for i in range(setting.host_num)]
-    collision = [False for i in range(setting.host_num)]
     waiting_time = [0 for i in range(setting.host_num)]
-    detect_waiting_time = [0 for i in range(setting.host_num)]
-    sound = [False for i in range(setting.total_time)]
+    collision = [False for i in range(setting.host_num)]
+    sound = [[] for i in range(setting.total_time)]
     success_count = 0
     idle_count = 0
     collision_count = 0
     random.seed(setting.seed)
     for t in range(setting.total_time):
         # All hosts decide the action (send/idle/stop sending)
-        sending_now = []
-        # Hosts that decide to send packets.
         for i in range(setting.host_num):
             if t in setting.packets[i]:
                 packet_come[i].append('V')
@@ -199,43 +196,36 @@ def csma(setting, show_history=False):
             elif sending_time[i] > 1:
                 host_actions[i].append('-')
                 sending_time[i] -= 1
-                sending_now.append(i)
-                sound[t] = True
+                sound[t].append(i)
             elif sending_time[i] == 1:
-                sending_now.append(i)
-                sound[t] = True
-            elif detect_waiting_time[i] > 0:
-                host_actions[i].append('.')
-                detect_waiting_time[i] -= 1
+                sound[t].append(i)
             elif packet_num[i] > 0:
-                if t - 1 >= setting.link_delay and (sound[t - 1 - setting.link_delay] == False or host_actions[i][t-1] == '>'):
+                if t - 1 >= setting.link_delay and (len(sound[t - 1 - setting.link_delay]) == 0 or (len(sound[t - 1 - setting.link_delay]) == 1 and sound[t - 1 - setting.link_delay][0] == i)):
                     host_actions[i].append('<')
                     sending_time[i] = setting.packet_time
-                    sending_now.append(i)
-                    sound[t] = True
+                    sound[t].append(i)
                 else:
                     host_actions[i].append('.')
-                    detect_waiting_time[i] = random.randint(1, setting.max_colision_wait_time)
+                    waiting_time[i] = random.randint(1, setting.max_colision_wait_time)
             else:
                 host_actions[i].append('.')
 
-        # Check collision if two or above hosts are sending.
-        if len(sending_now) > 1:
-            for host in sending_now:
-                collision[host] = True
+        if t - 1 >= setting.link_delay and len(sound[t - 1 - setting.link_delay]) > 1:
+            for host in sound[t - 1 - setting.link_delay]:
+                if sending_time[i] >= 1:
+                    collision[host] = True
 
-        # If the host finishes a packet, it stops sending.
         for i in range(setting.host_num):
-            if sending_time[i] == 1:
+            if sending_time[i] == 1: 
+                # Check collision if two or above hosts are sending.
                 if collision[i] == True:
                     host_actions[i][t] = '|'
                     collision[i] = False
                     waiting_time[i] = random.randint(1, setting.max_colision_wait_time)
-                else:
+                else: # If the host finishes a packet, it stops sending.
                     host_actions[i][t] = '>'
                     success_count += setting.packet_time
                     packet_num[i] -= 1
-                sound[t] = False
                 sending_time[i] = 0
 
     # Show the history of each host
@@ -271,7 +261,6 @@ def csma_cd(setting, show_history=False):
     packet_num = [0 for i in range(setting.host_num)]
     sending_time = [0 for i in range(setting.host_num)]
     waiting_time = [0 for i in range(setting.host_num)]
-    detect_waiting_time = [0 for i in range(setting.host_num)]
     sound = [[] for i in range(setting.total_time)]
     success_count = 0
     idle_count = 0
@@ -295,9 +284,6 @@ def csma_cd(setting, show_history=False):
                 sound[t].append(i)
             elif sending_time[i] == 1:
                 sound[t].append(i)
-            elif detect_waiting_time[i] > 0:
-                host_actions[i].append('.')
-                detect_waiting_time[i] -= 1
             elif packet_num[i] > 0:
                 if t - 1 >= setting.link_delay and (len(sound[t - 1 - setting.link_delay]) == 0 or (len(sound[t - 1 - setting.link_delay]) == 1 and sound[t - 1 - setting.link_delay][0] == i)):
                     host_actions[i].append('<')
@@ -305,7 +291,7 @@ def csma_cd(setting, show_history=False):
                     sound[t].append(i)
                 else:
                     host_actions[i].append('.')
-                    detect_waiting_time[i] = random.randint(1, setting.max_colision_wait_time)
+                    waiting_time[i] = random.randint(1, setting.max_colision_wait_time)
             else:
                 host_actions[i].append('.')
 
