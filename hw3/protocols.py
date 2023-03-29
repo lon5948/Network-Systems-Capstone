@@ -49,7 +49,7 @@ def aloha(setting, show_history=False):
                 if collision[i] == True:
                     host_actions[i][t] = '|'
                     collision[i] = False
-                    waiting_time[i] = random.randint(1, setting.max_colision_wait_time)
+                    waiting_time[i] = random.randint(1, setting.max_colision_wait_time) - 1
                 else:
                     host_actions[i][t] = '>'
                     success_count += setting.packet_time
@@ -196,9 +196,8 @@ def csma(setting, show_history=False):
             elif sending_time[i] > 1:
                 host_actions[i].append('-')
                 sending_time[i] -= 1
-                sound[t].append(i)
-            elif sending_time[i] == 1:
-                sound[t].append(i)
+                if sending_time[i] > 1:
+                    sound[t].append(i)
             elif packet_num[i] > 0:
                 if t - 1 >= setting.link_delay and (len(sound[t - 1 - setting.link_delay]) == 0 or (len(sound[t - 1 - setting.link_delay]) == 1 and sound[t - 1 - setting.link_delay][0] == i)):
                     host_actions[i].append('<')
@@ -206,13 +205,13 @@ def csma(setting, show_history=False):
                     sound[t].append(i)
                 else:
                     host_actions[i].append('.')
-                    waiting_time[i] = random.randint(1, setting.max_colision_wait_time)
+                    waiting_time[i] = random.randint(1, setting.max_colision_wait_time) - 1
             else:
                 host_actions[i].append('.')
 
         if t - 1 >= setting.link_delay and len(sound[t - 1 - setting.link_delay]) > 1:
             for host in sound[t - 1 - setting.link_delay]:
-                if sending_time[i] >= 1:
+                if sending_time[host] >= 1:
                     collision[host] = True
 
         for i in range(setting.host_num):
@@ -221,7 +220,7 @@ def csma(setting, show_history=False):
                 if collision[i] == True:
                     host_actions[i][t] = '|'
                     collision[i] = False
-                    waiting_time[i] = random.randint(1, setting.max_colision_wait_time)
+                    waiting_time[i] = random.randint(1, setting.max_colision_wait_time) - 1
                 else: # If the host finishes a packet, it stops sending.
                     host_actions[i][t] = '>'
                     success_count += setting.packet_time
@@ -281,9 +280,8 @@ def csma_cd(setting, show_history=False):
             elif sending_time[i] > 1:
                 host_actions[i].append('-')
                 sending_time[i] -= 1
-                sound[t].append(i)
-            elif sending_time[i] == 1:
-                sound[t].append(i)
+                if sending_time[i] > 1:
+                    sound[t].append(i)
             elif packet_num[i] > 0:
                 if t - 1 >= setting.link_delay and (len(sound[t - 1 - setting.link_delay]) == 0 or (len(sound[t - 1 - setting.link_delay]) == 1 and sound[t - 1 - setting.link_delay][0] == i)):
                     host_actions[i].append('<')
@@ -291,7 +289,7 @@ def csma_cd(setting, show_history=False):
                     sound[t].append(i)
                 else:
                     host_actions[i].append('.')
-                    waiting_time[i] = random.randint(1, setting.max_colision_wait_time)
+                    waiting_time[i] = random.randint(1, setting.max_colision_wait_time) - 1 
             else:
                 host_actions[i].append('.')
 
@@ -299,7 +297,7 @@ def csma_cd(setting, show_history=False):
             # Check collision if two or above hosts are sending.
             if sending_time[i] >= 1 and t - 1 >= setting.link_delay and (len(sound[t - 1 - setting.link_delay]) > 1 or (len(sound[t - 1 - setting.link_delay]) == 1 and sound[t - 1 - setting.link_delay][0] != i)): 
                 host_actions[i][t] = '|'
-                waiting_time[i] = random.randint(1, setting.max_colision_wait_time)
+                waiting_time[i] = random.randint(1, setting.max_colision_wait_time) - 1
                 sending_time[i] = 0
             elif sending_time[i] == 1: # If the host finishes a packet, it stops sending.
                 host_actions[i][t] = '>'
