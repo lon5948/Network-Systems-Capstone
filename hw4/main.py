@@ -34,7 +34,7 @@ def run_ospf(link_cost: list):
                 if n not in visited_r:
                     if min_cost[i][target] + link_cost[target][n] < min_cost[i][n]:
                         min_cost[i][n] = min_cost[i][target] + link_cost[target][n]                   
-                    trace.append((min_cost[target][n], n))
+                    trace.append((min_cost[i][n], n))
             trace = sorted(trace)
             while len(trace) > 0 and trace[0][1] in visited_r:
                 trace.remove(trace[0])
@@ -67,10 +67,8 @@ def run_rip(link_cost: list):
                 for j in range(N):
                     if link_cost[n][i] + temp[i][j] < temp[n][j]:
                         min_cost[n][j] = link_cost[n][i] + temp[i][j]
-                        #print(n, i, j, min_cost[n][j])
                         change[n] = True
                         flag = True
-        #print('------------------------')
     return (min_cost, log)
 
 
@@ -83,10 +81,12 @@ def main(link_cost: list):
 if __name__ == '__main__':
     
     link_cost = [
-                    [0, 4, 1, 999], 
-                    [4, 0, 2, 999], 
-                    [1, 2, 0, 3], 
-                    [999, 999, 3, 0]
+                    [  0,   2,   5,   1, 999, 999],
+                    [  2,   0,   3,   2, 999, 999],
+                    [  5,   3,   0,   3,   1,   5],
+                    [  1,   2,   3,   0,   1, 999],
+                    [999, 999,   1,   1,   0,   2],
+                    [999, 999,   5, 999,   2,   0]
                 ]
     
     main(link_cost)
