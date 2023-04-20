@@ -1,63 +1,40 @@
-class router:
-    def __init__(self, id, cost):
-        self.id = id
-        self.cost = cost
-        self.min_cost = cost
-        self.visited = list()
-        self.send = list()
-        self.receive = list()
-        self.neighbor = list()
-    def add_neighbor(self, n):
-        self.neighbor.append(n)
-    def flood(self, src):
-        self.receive.append(src)
-        self.visited.append(src)
-
-def set_topology(link_cost: list):
-    global routers
-    N = len(link_cost)
-    routers = list()
-    for i in range(N):
-        routers.append(router(i, link_cost[i]))
-        routers[i].visited.append(i)
-        routers[i].send.append(i)
-    for i in range(N):    
-        for j in range(N):
-            if link_cost[i][j] > 0 and link_cost[i][j] < 999:
-                routers[i].add_neighbor(routers[j])
-#-> tuple[list, list]
 def run_ospf(link_cost: list):
     N = len(link_cost)
     flag = True
     log = list()
+    receive = [[] for i in range(N)]
+    send = [[i] for i in range(N)]
+    visited = [[i] for i in range(N)]
+    neighbors = [[j for j in range(N) if link_cost[i][j] > 0 and link_cost[i][j] < 999] for i in range(N)]
     # flooding
     while flag:
         flag = False
         round_log = list()
         for i in range(N):
-            for s in routers[i].send:
-                for n in routers[i].neighbor:
-                    if s not in n.visited:
-                        n.flood(s)
-                        round_log.append((i, s, n.id))
+            for s in send[i]:
+                for n in neighbors[i]:
+                    if s not in visited[n]:
+                        receive[n].append(s)
+                        visited[n].append(s)
+                        round_log.append((i, s, n))
                         flag = True
         for i in range(N):
-            routers[i].send = routers[i].receive.copy()
-            routers[i].receive.clear()
+            send[i] = receive[i].copy()
+            receive[i].clear()
         round_log = sorted(round_log)
         log.extend(round_log)
     # min cost
-    min_cost_list = list()
+    min_cost = [link_cost[i].copy() for i in range(N)]
     for i in range(N):
         trace = list()
         visited_r = [i]
         target = i
         while True: 
-            for n in routers[target].neighbor:
-                if n.id not in visited_r:
-                    if routers[i].min_cost[target] + link_cost[target][n.id] < routers[i].min_cost[n.id]:
-                        routers[i].min_cost[n.id] = routers[i].min_cost[target] + link_cost[target][n.id]                   
-                    trace.append((routers[target].min_cost[n.id], n.id))
+            for n in neighbors[target]:
+                if n not in visited_r:
+                    if min_cost[i][target] + link_cost[target][n] < min_cost[i][n]:
+                        min_cost[i][n] = min_cost[i][target] + link_cost[target][n]                   
+                    trace.append((min_cost[target][n], n))
             trace = sorted(trace)
             while len(trace) > 0 and trace[0][1] in visited_r:
                 trace.remove(trace[0])
@@ -67,32 +44,49 @@ def run_ospf(link_cost: list):
                 visited_r.append(target)
             else:
                 break
-        min_cost_list.append(routers[i].min_cost)
-    return (min_cost_list, log)
-            
+    return (min_cost, log)
 
-        
 
-'''
-def run_rip(link_cost: list) -> tuple[list, list]:
-    pass
-'''
+def run_rip(link_cost: list):
+    N = len(link_cost)
+    log = list()
+    min_cost = [link_cost[i].copy() for i in range(N)]
+    change = [True for i in range(N)]
+    flag = True
+    neighbors = [[j for j in range(N) if link_cost[i][j] > 0 and link_cost[i][j] < 999] for i in range(N)]    
+    while flag:
+        flag = False
+        for i in range(N):
+            if change[i]:
+                change[i] = False
+                for n in neighbors[i]:
+                    log.append((i, n))
+        temp = [min_cost[i].copy() for i in range(N)]
+        for i in range(N):
+            for n in neighbors[i]:
+                for j in range(N):
+                    if link_cost[n][i] + temp[i][j] < temp[n][j]:
+                        min_cost[n][j] = link_cost[n][i] + temp[i][j]
+                        #print(n, i, j, min_cost[n][j])
+                        change[n] = True
+                        flag = True
+        #print('------------------------')
+    return (min_cost, log)
+
+
 def main(link_cost: list):
-    set_topology(link_cost)
     print('OSPF:\n', run_ospf(link_cost))
-    #print('RIP:\n', run_rip(link_cost))
-    pass
+    print('-------------------------------------------')
+    print('RIP:\n', run_rip(link_cost))
     
 
 if __name__ == '__main__':
     
     link_cost = [
-                    [  0,   2,   5,   1, 999, 999],
-                    [  2,   0,   3,   2, 999, 999],
-                    [  5,   3,   0,   3,   1,   5],
-                    [  1,   2,   3,   0,   1, 999],
-                    [999, 999,   1,   1,   0,   2],
-                    [999, 999,   5, 999,   2,   0]
+                    [0, 4, 1, 999], 
+                    [4, 0, 2, 999], 
+                    [1, 2, 0, 3], 
+                    [999, 999, 3, 0]
                 ]
     
     main(link_cost)
