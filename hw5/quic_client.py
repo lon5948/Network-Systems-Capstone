@@ -1,45 +1,10 @@
 import socket, struct
 import threading, heapq
 
-def create_stream(stream_id, data, client_addr, server_addr):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind(client_addr)
-    length = len(data)
-    """ streamID, offset, finish, payload"""
-    for i in range(0, length, 1500):
-        if i + 1500 < length:
-            frame = struct.pack("iii1500s",stream_id, i, 0, data[i:i+1500])
-        else:
-            frame = struct.pack("iii1500s",stream_id, i, 1, data[i:length])
-        s.sendto(frame, server_addr)
-        ack, s_addr = s.recvfrom(2048)
-        if ack.decode("utf-8") != "ACK":
-            print("[ERROR] ACK FROM SERVER IS INCORRECT")
-            exit(0)
-
-def recv_packet(client_addr):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind(client_addr)
-    flag = False
-    frame_num = 0
-    total_num = 0
-    d = dict()
-    while True:
-        frame, c_addr = s.recvfrom(2048)
-        stream_id, offset, finish, payload = struct.unpack("iii1500s", frame)
-        frame_num += 1
-        total_num = max(total_num, offset/1500 + 1)
-        d[offset] = payload
-        if finish == 1:
-            flag = True
-        if flag and frame_num == total_num:
-            break
-    data = ""
-    for i in range(total_num):
-        data += d[i*1500]
-    return (stream_id, data)
-
 class QUICClient:
+    def __inti__(self):
+        self.send_window_size = 10
+
     # connect to the specific server
     def connect(self, socket_addr): 
         self.addr = socket_addr
@@ -50,14 +15,64 @@ class QUICClient:
         self.server_addr = server_addr
         print("Message:", hello_ack.decode("utf-8"), "from", server_addr)
     
+    def create_stream(self, stream_id, data):
+        length = len(data)
+        windows = 0
+        packet_id = 0
+        ack_id = 0
+        i = 0
+        packets = dict()
+        """ streamID, packet_id, offset, finish, payload """
+        while True:
+            if i < length and windows < self.send_window_size:
+                if i + 1500 < length:
+                    stream_frame = struct.pack("iiii1500s",stream_id, packet_id, i, 0, data[i:i+1500])
+                else:
+                    stream_frame = struct.pack("iiii1500s",stream_id, packet_id, i, 1, data[i:length])
+                packets[packet_id] = stream_frame
+                self.socket_.sendto(stream_frame, self.client_addr)
+                i += 1500
+                packet_id += 1
+                windows += 1
+            if windows == self.send_window_size:
+                ack_frame, c_addr = self.socket_.recvfrom(2048)
+                id, ack = struct.unpack("i3s", ack_frame)
+                if ack.decode("utf-8") != "ACK":
+                    print("[ERROR] ACK IS INCORRECT")
+                    exit(0)
+                if id == ack_id:
+                    ack_id += 1
+                    windows -= 1
+                else:
+                    self.socket_.sendto(packets[packet_id], self.server_addr)
     # call this method to send data, with non-reputation stream_id
     def send(self, stream_id: int, data: bytes):
-        s_th = threading.Thread(target=create_stream, args=(stream_id, data, self.addr, self.server_addr))
+        s_th = threading.Thread(target=self.create_stream, args=(stream_id, data, self.addr, self.server_addr))
         s_th.start()
     
+    def recv_packet(self):
+        flag = False
+        total_num = 0
+        d = dict()
+        while True:
+            stream_frame, c_addr = self.socket_.recvfrom(2048)
+            stream_id, packet_id, offset, finish, payload = struct.unpack("iiii1500s", stream_frame)
+            total_num = max(total_num, offset/1500 + 1)
+            d[offset] = payload
+            ack_frame = struct.pack("i3s", packet_id, "ACK")
+            self.socket_.sendto(ack_frame, self.server_addr)
+            if finish == 1:
+                flag = True
+            if flag and len(d) == total_num:
+                break
+        data = ""
+        for i in range(total_num):
+            data += d[i*1500]
+        return (stream_id, data)
+
     # receive a stream, with stream_id
     def recv(self): # -> tuple[int, bytes] stream_id, data
-        r_th = threading.Thread(target=recv_packet, args=(self.addr))
+        r_th = threading.Thread(target=self.recv_packet)
         r_th.start()
     
     # close the connection and the socket
