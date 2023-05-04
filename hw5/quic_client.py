@@ -38,10 +38,12 @@ class QUICClient:
                     else:
                         offset = data['next']
                     next_offset = offset + 1500
+                    send_finish = 0
                     if next_offset > len(data['payload']):
                         next_offset = len(data['payload'])
+                        send_finish = 1
                     # stream_id, type, offset, finish, payload
-                    stream_frame = struct.pack("i3sii1500s",stream_id, b"STR", offset, 0, data['payload'][offset:next_offset])
+                    stream_frame = struct.pack("i3sii1500s",stream_id, b"STR", offset, send_finish, data['payload'][offset:next_offset])
                     send_packet += stream_frame
                     self.send_buffer[stream_id]['wait_ack'].append(offset)
                     data['next'] = next_offset
@@ -103,7 +105,6 @@ class QUICClient:
     # receive a stream, with stream_id
     def recv(self): 
         while True:
-            print('length of receive buffer:', len(self.recv_buffer))
             for stream_id, data in self.recv_buffer.items():
                 if data['finish'] == True and len(data['payload']) == data['total_num']:
                     ret = ""
