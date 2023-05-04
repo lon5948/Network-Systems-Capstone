@@ -73,7 +73,7 @@ class QUICClient:
                             self.recv_buffer[stream_id] = {'finish':False, 'total_num':0, 'payload':dict()}
                         if finish == 1:
                             self.recv_buffer[stream_id]['finish'] = True
-                            self.recv_buffer[stream_id]['total_num'] = offset/1500 + 1
+                            self.recv_buffer[stream_id]['total_num'] = int(offset/1500) + 1
                         self.recv_buffer[stream_id]['payload'][offset] = payload
                         total_recv_num = 0
                         for v in self.recv_buffer.values():

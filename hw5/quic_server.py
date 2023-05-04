@@ -42,10 +42,12 @@ class QUICServer:
                     else:
                         offset = data['next']
                     next_offset = offset + 1500
+                    send_finish = 0
                     if next_offset > len(data['payload']):
                         next_offset = len(data['payload'])
+                        send_finish = 1
                     # stream_id, type, offset, finish, payload
-                    stream_frame = struct.pack("i3sii1500s",stream_id, b"STR", offset, 0, data['payload'][offset:next_offset])
+                    stream_frame = struct.pack("i3sii1500s",stream_id, b"STR", offset, send_finish, data['payload'][offset:next_offset])
                     send_packet += stream_frame
                     self.send_buffer[stream_id]['wait_ack'].append(offset)
                     data['next'] = next_offset
@@ -54,7 +56,8 @@ class QUICServer:
                         break
                 if num > 0:
                     send_packet = str(num).encode('utf-8') + send_packet
-                    self.socket_.sendto(send_packet, self.client_addr)
+                    self.socket_.sendto(send_packet, self.server_addr)
+                    
 
             self.socket_.settimeout(3)
             ack_num = 0
@@ -74,7 +77,7 @@ class QUICServer:
                             self.recv_buffer[stream_id] = {'finish':False, 'total_num':0, 'payload':dict()}
                         if finish == 1:
                             self.recv_buffer[stream_id]['finish'] = True
-                            self.recv_buffer[stream_id]['total_num'] = offset/1500 + 1
+                            self.recv_buffer[stream_id]['total_num'] = int(offset/1500) + 1
                         self.recv_buffer[stream_id]['payload'][offset] = payload
                         total_recv_num = 0
                         for v in self.recv_buffer.values():
@@ -84,7 +87,7 @@ class QUICServer:
                         else:
                             ack = struct.pack("i3sii1500s", stream_id, b"ACK", offset, 0, b"0")
                         ack = b"1" + ack
-                        self.socket_.sendto(ack, self.client_addr)
+                        self.socket_.sendto(ack, self.server_addr)
                     elif type == "ACK":
                         self.sending_flag = (finish==0)
                         count = self.send_buffer[stream_id]['wait_ack'].count(offset)
