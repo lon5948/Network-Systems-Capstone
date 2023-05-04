@@ -28,7 +28,7 @@ class QUICServer:
     
     def func(self):
         """ 
-        [SEND BUFFER] { stream_id : { 'payload': data, 'next': offset, 'wait_ack': list() }}
+        [SEND BUFFER] { stream_id : { 'payload': data, 'next': offset, 'wait_ack': {offset: True} }}
         [RECV BUFFER] { stream_id: { finish: True, total_num: 5, payload : { offset: "This is data." }}}
         """
         check_list = list()
@@ -40,23 +40,26 @@ class QUICServer:
                 flag = False
                 for stream_id, data in self.send_buffer.items():
                     if data['next'] == len(data['payload']):
-                        offset = data['wait_ack'][0]
-                        data['wait_ack'].remove(offset)
+                        print('wait_ack:', data['wait_ack'])
+                        for off, ac in data['wait_ack'].items():
+                            if ac == False:
+                                offset = off
+                        if (stream_id, offset) in check_list:
+                            flag = True
+                            break
+                        data['wait_ack'][offset] = True
                     else:
                         offset = data['next']
-                    if (stream_id, offset) in check_list:
-                        flag = True
-                        break
                     next_offset = offset + 1500
                     send_finish = 0
                     if next_offset > len(data['payload']):
                         next_offset = len(data['payload'])
                         send_finish = 1
                     # stream_id, type, offset, finish, payload
-                    stream_frame = struct.pack("i3sii1500s",stream_id, b"STR", offset, send_finish, data['payload'][offset:next_offset])
+                    stream_frame = struct.pack("i3sii1500s", stream_id, b"STR", offset, send_finish, data['payload'][offset:next_offset])
                     print(data['payload'][offset:next_offset], "pack done")
                     send_packet += stream_frame
-                    self.send_buffer[stream_id]['wait_ack'].append(offset)
+                    data['wait_ack'][offset] = True
                     check_list.append((stream_id, offset))
                     data['next'] = next_offset
                     num += 1
@@ -97,11 +100,14 @@ class QUICServer:
                         self.socket_.sendto(ack, self.client_addr)
                     elif ftype == "ACK":
                         self.sending_flag = (finish==0)
-                        count = self.send_buffer[stream_id]['wait_ack'].count(offset)
                         ack_num += 1
-                        for c in range(count):
-                            self.send_buffer[stream_id]['wait_ack'].remove(offset)
-                        if len(self.send_buffer[stream_id]['wait_ack']) == 0:
+                        self.send_buffer[stream_id]['wait_ack'][offset] = True
+                        del_flag = False
+                        for de, ac in self.send_buffer[stream_id]['wait_ack'].items():
+                            if ac == False:
+                                del_flag = True
+                                break
+                        if del_flag == False:
                             del self.send_buffer[stream_id]
                     
             if num > 0 and float(ack_num)/num < 0.6:
@@ -110,7 +116,9 @@ class QUICServer:
 
     # call this method to send data, with non-reputation stream_id
     def send(self, stream_id: int, data: bytes):
-        self.send_buffer[stream_id] = {'payload':data, 'next':0, 'wait_ack':list()}
+        self.send_buffer[stream_id] = {'payload':data, 'next':0, 'wait_ack':dict()}
+        for i in range(int(len(data)/1500)+1):
+            self.send_buffer[stream_id]['wait_ack'][i*1500] = False
     
     # receive a stream, with stream_id
     def recv(self): 

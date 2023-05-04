@@ -37,12 +37,12 @@ class QUICClient:
                 for stream_id, data in self.send_buffer.items():
                     if data['next'] == len(data['payload']):
                         offset = data['wait_ack'][0]
+                        if (stream_id, offset) in check_list:
+                            flag = True
+                            break
                         data['wait_ack'].remove(offset)
                     else:
                         offset = data['next']
-                    if (stream_id, offset) in check_list:
-                        flag = True
-                        break
                     next_offset = offset + 1500
                     send_finish = 0
                     if next_offset > len(data['payload']):
@@ -61,7 +61,6 @@ class QUICClient:
                 send_packet = str(num).encode('utf-8') + send_packet
                 self.socket_.sendto(send_packet, self.server_addr)
                     
-
             self.socket_.settimeout(3)
             ack_num = 0
             while True:
