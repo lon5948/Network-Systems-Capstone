@@ -46,7 +46,6 @@ class QUICServer:
                         next_offset = len(data['payload'])
                     # stream_id, type, offset, finish, payload
                     stream_frame = struct.pack("i3sii1500s",stream_id, b"STR", offset, 0, data['payload'][offset:next_offset])
-                    print(data['payload'][offset:next_offset].encode('utf-8'), "pack done")
                     send_packet += stream_frame
                     self.send_buffer[stream_id]['wait_ack'].append(offset)
                     data['next'] = next_offset
@@ -56,7 +55,6 @@ class QUICServer:
                 if num > 0:
                     send_packet = str(num).encode('utf-8') + send_packet
                     self.socket_.sendto(send_packet, self.client_addr)
-                    print("server send packet")
 
             self.socket_.settimeout(3)
             ack_num = 0
@@ -125,9 +123,7 @@ if __name__ == "__main__":
     server = QUICServer()
     server.listen(("", 30000))
     server.accept()
-    print('server start to send')
     server.send(1, b"SOME DATA, MAY EXCEED 1500 bytes")
-    print('server send done')
     recv_id, recv_data = server.recv()
     print(recv_data.decode("utf-8")) # Hello Server!
     server.close() 

@@ -60,12 +60,10 @@ class QUICClient:
             while True:
                 try:
                     recv_packet, c_addr = self.socket_.recvfrom(BUFFER_SIZE)
-                    print("receive packet")
                 except socket.timeout as e:
                     self.socket_.gettimeout()   
                     break
                 recv_packet_num = recv_packet[0] - 48
-                print("recv_packet_num", recv_packet_num)
                 for i in range(recv_packet_num):
                     stream_id, type, offset, finish, payload = struct.unpack("i3sii1500s", recv_packet[1516*i+1:1516*(i+1)+1])
                     type = type.decode('utf-8')
