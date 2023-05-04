@@ -56,7 +56,7 @@ class QUICServer:
                         break
                 if num > 0:
                     send_packet = str(num).encode('utf-8') + send_packet
-                    self.socket_.sendto(send_packet, self.server_addr)
+                    self.socket_.sendto(send_packet, self.client_addr)
                     
 
             self.socket_.settimeout(3)
@@ -69,10 +69,9 @@ class QUICServer:
                     break
                 recv_packet_num = recv_packet[0] - 48
                 for i in range(recv_packet_num):
-                    stream_id, type, offset, finish, payload = struct.unpack("i3sii1500s", recv_packet[1516*i+1:1516*(i+1)+1])
-                    type = type.decode('utf-8')
-                    payload = payload.decode('utf-8')
-                    if type == "STR":
+                    stream_id, ftype, offset, finish, payload = struct.unpack("i3sii1500s", recv_packet[1516*i+1:1516*(i+1)+1])
+                    ftype = ftype.decode('utf-8')
+                    if ftype == "STR":
                         if stream_id not in self.recv_buffer:
                             self.recv_buffer[stream_id] = {'finish':False, 'total_num':0, 'payload':dict()}
                         if finish == 1:
@@ -87,8 +86,8 @@ class QUICServer:
                         else:
                             ack = struct.pack("i3sii1500s", stream_id, b"ACK", offset, 0, b"0")
                         ack = b"1" + ack
-                        self.socket_.sendto(ack, self.server_addr)
-                    elif type == "ACK":
+                        self.socket_.sendto(ack, self.client_addr)
+                    elif ftype == "ACK":
                         self.sending_flag = (finish==0)
                         count = self.send_buffer[stream_id]['wait_ack'].count(offset)
                         ack_num += 1
@@ -110,7 +109,7 @@ class QUICServer:
         while True:
             for stream_id, data in self.recv_buffer.items():
                 if data['finish'] == True and len(data['payload']) == data['total_num']:
-                    ret = ""
+                    ret = b""
                     for i in range(data['total_num']):
                         ret += data['payload'][i*1500]
                     del self.recv_buffer[stream_id]
