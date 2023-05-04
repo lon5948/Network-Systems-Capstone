@@ -31,16 +31,22 @@ class QUICServer:
         [SEND BUFFER] { stream_id : { 'payload': data, 'next': offset, 'wait_ack': list() }}
         [RECV BUFFER] { stream_id: { finish: True, total_num: 5, payload : { offset: "This is data." }}}
         """
+        check_list = list()
         while True:
-            if self.sending_flag:
-                num = 0
-                send_packet = b""
+            num = 0
+            send_packet = b""
+            check_list.clear()
+            while self.sending_flag and num < self.congestion_window:
+                flag = False
                 for stream_id, data in self.send_buffer.items():
                     if data['next'] == len(data['payload']):
                         offset = data['wait_ack'][0]
                         data['wait_ack'].remove(offset)
                     else:
                         offset = data['next']
+                    if (stream_id, offset) in check_list:
+                        flag = True
+                        break
                     next_offset = offset + 1500
                     send_finish = 0
                     if next_offset > len(data['payload']):
@@ -48,17 +54,19 @@ class QUICServer:
                         send_finish = 1
                     # stream_id, type, offset, finish, payload
                     stream_frame = struct.pack("i3sii1500s",stream_id, b"STR", offset, send_finish, data['payload'][offset:next_offset])
+                    print(data['payload'][offset:next_offset], "pack done")
                     send_packet += stream_frame
                     self.send_buffer[stream_id]['wait_ack'].append(offset)
+                    check_list.append((stream_id, offset))
                     data['next'] = next_offset
                     num += 1
-                    if num >= self.congestion_window:
-                        break
-                if num > 0:
-                    send_packet = str(num).encode('utf-8') + send_packet
-                    self.socket_.sendto(send_packet, self.client_addr)
+                if flag:
+                    break
+            if num > 0:
+                send_packet = str(num).encode('utf-8') + send_packet
+                print("packet size", num, "send done")
+                self.socket_.sendto(send_packet, self.client_addr)
                     
-
             self.socket_.settimeout(3)
             ack_num = 0
             while True:
@@ -120,13 +128,21 @@ class QUICServer:
     def close(self):
         self.threading.join()
         self.socket_.close()
-        exit(0)
 
 if __name__ == "__main__":
     server = QUICServer()
     server.listen(("", 30000))
     server.accept()
-    server.send(1, b"SOME DATA, MAY EXCEED 1500 bytes")
+    server.send(1, b"SOME DATA, MAY EXCEED 1500 bytes AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
+                BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\
+                BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\
+                GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG\
+                GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG\
+                QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ\
+                QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ\
+                RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\
+                EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE TEST TEST TEST")
     recv_id, recv_data = server.recv()
     print(recv_data.decode("utf-8")) # Hello Server!
     server.close() 

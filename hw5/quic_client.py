@@ -27,16 +27,22 @@ class QUICClient:
         [SEND BUFFER] { stream_id : { 'payload': data, 'next': offset, 'wait_ack': list() }}
         [RECV BUFFER] { stream_id: { finish: True, total_num: 5, payload : { offset: "This is data." }}}
         """
+        check_list = list()
         while True:
-            if self.sending_flag:
-                num = 0
-                send_packet = b""
+            num = 0
+            send_packet = b""
+            check_list.clear()
+            while self.sending_flag and num < self.congestion_window:
+                flag = False
                 for stream_id, data in self.send_buffer.items():
                     if data['next'] == len(data['payload']):
                         offset = data['wait_ack'][0]
                         data['wait_ack'].remove(offset)
                     else:
                         offset = data['next']
+                    if (stream_id, offset) in check_list:
+                        flag = True
+                        break
                     next_offset = offset + 1500
                     send_finish = 0
                     if next_offset > len(data['payload']):
@@ -46,13 +52,14 @@ class QUICClient:
                     stream_frame = struct.pack("i3sii1500s",stream_id, b"STR", offset, send_finish, data['payload'][offset:next_offset])
                     send_packet += stream_frame
                     self.send_buffer[stream_id]['wait_ack'].append(offset)
+                    check_list.append((stream_id, offset))
                     data['next'] = next_offset
                     num += 1
-                    if num >= self.congestion_window:
-                        break
-                if num > 0:
-                    send_packet = str(num).encode('utf-8') + send_packet
-                    self.socket_.sendto(send_packet, self.server_addr)
+                if flag:
+                    break
+            if num > 0:
+                send_packet = str(num).encode('utf-8') + send_packet
+                self.socket_.sendto(send_packet, self.server_addr)
                     
 
             self.socket_.settimeout(3)
@@ -103,6 +110,9 @@ class QUICClient:
     def recv(self): 
         while True:
             for stream_id, data in self.recv_buffer.items():
+                print('finish:', data['finish'])
+                print('total_num:', data['total_num'])
+                print('receive packet num:', len(data['payload']))
                 if data['finish'] == True and len(data['payload']) == data['total_num']:
                     ret = b""
                     for i in range(data['total_num']):
