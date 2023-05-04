@@ -21,38 +21,38 @@ class QUICServer:
         recv_window_size, msg = struct.unpack("i12s", hello)
         self.receive_window = recv_window_size
         print("Message:", msg.decode("utf-8"), "from", self.client_addr)
-        hello_ack = "Hello ACK"
-        self.socket_.sendto(hello_ack.encode("utf-8"), self.client_addr)
+        hello_ack = b"Hello ACK"
+        self.socket_.sendto(hello_ack, self.client_addr)
         self.threading = threading.Thread(target=self.func)
         self.threading.start()
     
     def func(self):
         """ 
-        [SEND BUFFER] { stream_id : { 'data': data, 'next': offset, 'wait_ack': list() }}
+        [SEND BUFFER] { stream_id : { 'payload': data, 'next': offset, 'wait_ack': list() }}
         [RECV BUFFER] { stream_id: { finish: True, total_num: 5, payload : { offset: "This is data." }}}
         """
         while True:
             if self.sending_flag:
                 num = 0
-                send_packet = ""
+                send_packet = b""
                 for stream_id, data in self.send_buffer.items():
-                    if data['next'] == len(data['data']):
+                    if data['next'] == len(data['payload']):
                         offset = data['wait_ack'][0]
                         data['wait_ack'].remove(offset)
                     else:
                         offset = data['next']
                     next_offset = offset + 1500
-                    if next_offset > len(data['data']):
-                        next_offset = len(data['data'])
+                    if next_offset > len(data['payload']):
+                        next_offset = len(data['payload'])
                     # stream_id, type, offset, finish, payload
-                    stream_frame = struct.pack("i3sii1500s",stream_id, "STR".encode('utf-8'), offset, 0, data['data'][offset:next_offset].encode('utf-8'))
+                    stream_frame = struct.pack("i3sii1500s",stream_id, b"STR", offset, 0, data['payload'][offset:next_offset])
                     send_packet += stream_frame
                     self.send_buffer[stream_id]['wait_ack'].append(offset)
                     data['next'] = next_offset
                     num += 1
                     if num >= self.congestion_window:
                         break
-                send_packet = str(num).encode() + send_packet
+                send_packet = str(num).encode('utf-8') + send_packet
                 self.socket_.sendto(send_packet, self.client_addr)
 
             self.socket_.settimeout(3)
@@ -79,10 +79,10 @@ class QUICServer:
                         for v in self.recv_buffer.values():
                             total_recv_num += v['total_num']
                         if total_recv_num >= self.receive_window:
-                            ack = struct.pack("i3sii1500s", stream_id, "ACK".encode('utf-8'), offset, 1, '0'.encode('utf-8'))
+                            ack = struct.pack("i3sii1500s", stream_id, b"ACK", offset, 1, b"0")
                         else:
-                            ack = struct.pack("i3sii1500s", stream_id, "ACK".encode('utf-8'), offset, 0, '0'.encode('utf-8'))
-                        ack = str(1).encode() + ack
+                            ack = struct.pack("i3sii1500s", stream_id, b"ACK", offset, 0, b"0")
+                        ack = b"1" + ack
                         self.socket_.sendto(ack, self.client_addr)
                     elif type == "ACK":
                         self.sending_flag = (finish==0)
@@ -93,7 +93,7 @@ class QUICServer:
                         if len(self.send_buffer[stream_id]['wait_ack']) == 0:
                             del self.send_buffer[stream_id]
                     
-            if float(ack_num)/num < 0.6:
+            if num > 0 and float(ack_num)/num < 0.6:
                 self.congestion_window = int(self.congestion_window/2)
 
 
