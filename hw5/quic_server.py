@@ -63,7 +63,7 @@ class QUICServer:
                     check_list.append((stream_id, offset))
                     data['next'] = next_offset
                     num += 1
-                if flag:
+                if flag or len(self.send_buffer) == 0:
                     break
             if num > 0:
                 send_packet = str(num).encode('utf-8') + send_packet
