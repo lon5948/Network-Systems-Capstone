@@ -96,11 +96,14 @@ class QUICClient:
                         self.socket_.sendto(ack, self.server_addr)
                     elif ftype == "ACK":
                         self.sending_flag = (finish==0)
-                        count = self.send_buffer[stream_id]['wait_ack'].count(offset)
                         ack_num += 1
-                        for c in range(count):
-                            self.send_buffer[stream_id]['wait_ack'].remove(offset)
-                        if len(self.send_buffer[stream_id]['wait_ack']) == 0:
+                        self.send_buffer[stream_id]['wait_ack'][offset] = True
+                        del_flag = False
+                        for de, ac in self.send_buffer[stream_id]['wait_ack'].items():
+                            if ac == False:
+                                del_flag = True
+                                break
+                        if del_flag == False:
                             del self.send_buffer[stream_id]
                     
             if num > 0 and float(ack_num)/num < 0.6:
