@@ -36,7 +36,7 @@ class QUICClient:
                 flag = False
                 for stream_id, data in self.send_buffer.items():
                     if data['next'] == len(data['payload']):
-                        print('wait_ack:', data['wait_ack'])
+                        #print('wait_ack:', data['wait_ack'])
                         for off, ac in data['wait_ack'].items():
                             if ac == False:
                                 offset = off
@@ -53,7 +53,7 @@ class QUICClient:
                         send_finish = 1
                     # stream_id, type, offset, finish, payload
                     stream_frame = struct.pack("i3sii1500s", stream_id, b"STR", offset, send_finish, data['payload'][offset:next_offset])
-                    print(data['payload'][offset:next_offset], "pack done")
+                    #print(data['payload'][offset:next_offset], "pack done")
                     send_packet += stream_frame
                     data['wait_ack'][offset] = True
                     check_list.append((stream_id, offset))
@@ -63,8 +63,8 @@ class QUICClient:
                     break
             if num > 0:
                 send_packet = str(num).encode('utf-8') + send_packet
-                print("packet size", num, "send done")
-                self.socket_.sendto(send_packet, self.client_addr)
+                #print("packet size", num, "send done")
+                self.socket_.sendto(send_packet, self.server_addr)
                     
             self.socket_.settimeout(3)
             ack_num = 0
@@ -116,9 +116,9 @@ class QUICClient:
     def recv(self): 
         while True:
             for stream_id, data in self.recv_buffer.items():
-                print('finish:', data['finish'])
-                print('total_num:', data['total_num'])
-                print('receive packet num:', len(data['payload']))
+                #print('finish:', data['finish'])
+                #print('total_num:', data['total_num'])
+                #print('receive packet num:', len(data['payload']))
                 if data['finish'] == True and len(data['payload']) == data['total_num']:
                     ret = b""
                     for i in range(data['total_num']):

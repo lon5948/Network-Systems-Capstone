@@ -40,7 +40,7 @@ class QUICServer:
                 flag = False
                 for stream_id, data in self.send_buffer.items():
                     if data['next'] == len(data['payload']):
-                        print('wait_ack:', data['wait_ack'])
+                        #print('wait_ack:', data['wait_ack'])
                         for off, ac in data['wait_ack'].items():
                             if ac == False:
                                 offset = off
@@ -57,7 +57,7 @@ class QUICServer:
                         send_finish = 1
                     # stream_id, type, offset, finish, payload
                     stream_frame = struct.pack("i3sii1500s", stream_id, b"STR", offset, send_finish, data['payload'][offset:next_offset])
-                    print(data['payload'][offset:next_offset], "pack done")
+                    #print(data['payload'][offset:next_offset], "pack done")
                     send_packet += stream_frame
                     data['wait_ack'][offset] = True
                     check_list.append((stream_id, offset))
@@ -67,7 +67,7 @@ class QUICServer:
                     break
             if num > 0:
                 send_packet = str(num).encode('utf-8') + send_packet
-                print("packet size", num, "send done")
+                #print("packet size", num, "send done")
                 self.socket_.sendto(send_packet, self.client_addr)
                     
             self.socket_.settimeout(3)
@@ -141,6 +141,7 @@ if __name__ == "__main__":
     server = QUICServer()
     server.listen(("", 30000))
     server.accept()
+    '''
     server.send(1, b"SOME DATA, MAY EXCEED 1500 bytes AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
                 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
                 BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\
@@ -151,6 +152,8 @@ if __name__ == "__main__":
                 QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ\
                 RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\
                 EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE TEST TEST TEST")
+    '''
+    server.send(1, b"SOME DATA, MAY EXCEED 1500 bytes")
     recv_id, recv_data = server.recv()
     print(recv_data.decode("utf-8")) # Hello Server!
     server.close() 
