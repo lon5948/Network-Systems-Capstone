@@ -120,6 +120,7 @@ class QUICServer:
     def close(self):
         self.threading.join()
         self.socket_.close()
+        exit(0)
 
 if __name__ == "__main__":
     server = QUICServer()
