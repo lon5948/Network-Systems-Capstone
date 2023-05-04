@@ -1,4 +1,4 @@
-import socket, struct, threading
+import socket, struct, threading, time
 
 BUFFER_SIZE = 8192
 
@@ -51,16 +51,19 @@ class QUICClient:
                 if num > 0:
                     send_packet = str(num).encode('utf-8') + send_packet
                     self.socket_.sendto(send_packet, self.server_addr)
+                    
 
             self.socket_.settimeout(3)
             ack_num = 0
             while True:
                 try:
                     recv_packet, c_addr = self.socket_.recvfrom(BUFFER_SIZE)
+                    print("receive packet")
                 except socket.timeout as e:
                     self.socket_.gettimeout()   
                     break
                 recv_packet_num = recv_packet[0] - 48
+                print("recv_packet_num", recv_packet_num)
                 for i in range(recv_packet_num):
                     stream_id, type, offset, finish, payload = struct.unpack("i3sii1500s", recv_packet[1516*i+1:1516*(i+1)+1])
                     type = type.decode('utf-8')
@@ -85,7 +88,7 @@ class QUICClient:
                         self.sending_flag = (finish==0)
                         count = self.send_buffer[stream_id]['wait_ack'].count(offset)
                         ack_num += 1
-                        for c in count:
+                        for c in range(count):
                             self.send_buffer[stream_id]['wait_ack'].remove(offset)
                         if len(self.send_buffer[stream_id]['wait_ack']) == 0:
                             del self.send_buffer[stream_id]
@@ -100,6 +103,7 @@ class QUICClient:
     # receive a stream, with stream_id
     def recv(self): 
         while True:
+            print('length of receive buffer:', len(self.recv_buffer))
             for stream_id, data in self.recv_buffer.items():
                 if data['finish'] == True and len(data['payload']) == data['total_num']:
                     ret = ""
@@ -107,6 +111,7 @@ class QUICClient:
                         ret += data['payload'][i*1500]
                     del self.recv_buffer[stream_id]
                     return (stream_id, ret)
+            time.sleep(1)
     
     # close the connection and the socket
     def close(self):
