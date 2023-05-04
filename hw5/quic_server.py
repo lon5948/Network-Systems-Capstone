@@ -40,14 +40,12 @@ class QUICServer:
                 flag = False
                 for stream_id, data in self.send_buffer.items():
                     if data['next'] == len(data['payload']):
-                        #print('wait_ack:', data['wait_ack'])
                         for off, ac in data['wait_ack'].items():
                             if ac == False:
                                 offset = off
                         if (stream_id, offset) in check_list:
                             flag = True
                             break
-                        data['wait_ack'][offset] = True
                     else:
                         offset = data['next']
                     next_offset = offset + 1500
@@ -57,9 +55,7 @@ class QUICServer:
                         send_finish = 1
                     # stream_id, type, offset, finish, payload
                     stream_frame = struct.pack("i3sii1500s", stream_id, b"STR", offset, send_finish, data['payload'][offset:next_offset])
-                    #print(data['payload'][offset:next_offset], "pack done")
                     send_packet += stream_frame
-                    data['wait_ack'][offset] = True
                     check_list.append((stream_id, offset))
                     data['next'] = next_offset
                     num += 1
@@ -141,18 +137,6 @@ if __name__ == "__main__":
     server = QUICServer()
     server.listen(("", 30000))
     server.accept()
-    '''
-    server.send(1, b"SOME DATA, MAY EXCEED 1500 bytes AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
-                AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\
-                BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\
-                BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\
-                GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG\
-                GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG\
-                QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ\
-                QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ\
-                RRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\
-                EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE TEST TEST TEST")
-    '''
     server.send(1, b"SOME DATA, MAY EXCEED 1500 bytes")
     recv_id, recv_data = server.recv()
     print(recv_data.decode("utf-8")) # Hello Server!
