@@ -37,7 +37,6 @@ class QUICServer:
             send_packet = b""
             check_list.clear()
             while self.sending_flag and num < self.congestion_window:
-                print("window size:",self.congestion_window)
                 flag = False
                 for stream_id, data in self.send_buffer.items():
                     if data['next'] == len(data['payload']):
@@ -139,7 +138,7 @@ if __name__ == "__main__":
     server = QUICServer()
     server.listen(("", 30000))
     server.accept()
-    server.send(b"SOME DATA, MAY EXCEED 1500 bytes")
+    server.send(1, b"SOME DATA, MAY EXCEED 1500 bytes")
     recv_id, recv_data = server.recv()
     print(recv_data.decode("utf-8")) # Hello Server!
     server.close() 
