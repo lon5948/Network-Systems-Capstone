@@ -72,6 +72,7 @@ class QUICClient:
                     self.socket_.gettimeout()   
                     break
                 recv_packet_num = recv_packet[0] - 48
+                print(recv_packet_num)
                 for i in range(recv_packet_num):
                     stream_id, ftype, offset, finish, payload = struct.unpack("i3sii1500s", recv_packet[1516*i+1:1516*(i+1)+1])
                     ftype = ftype.decode('utf-8')
@@ -135,10 +136,8 @@ class QUICClient:
 if __name__ == "__main__":
     client = QUICClient()
     client.connect(("127.0.0.1", 30000))
-    recv_id, recv_data = client.recv()
-    print(recv_data.decode("utf-8")) # SOME DATA, MAY EXCEED 1500 bytes
-    client.send(2, b"Hello Server!\n")
-    recv_id, recv_data = client.recv()
-    print(recv_data.decode("utf-8")) # SOME DATA, MAY EXCEED 1500 bytes
-    client.send(4, b"TEST CLIENT AGAIN!\n")
+    while True:
+        recv_id, recv_data = client.recv()
+        print(recv_data.decode("utf-8")) # SOME DATA, MAY EXCEED 1500 bytes
+    client.send(2, b"Hello Server!")
     client.close()
