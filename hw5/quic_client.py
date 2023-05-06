@@ -56,6 +56,8 @@ class QUICClient:
                     check_list.append((stream_id, offset))
                     data['next'] = next_offset
                     num += 1
+                    if num >= self.congestion_window:
+                        break
                 if flag or len(self.send_buffer) == 0:
                     break
             if num > 0:
