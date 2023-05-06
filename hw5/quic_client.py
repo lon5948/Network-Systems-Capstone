@@ -7,7 +7,7 @@ class QUICClient:
         self.send_buffer = dict()
         self.recv_buffer = dict()
         self.congestion_window = 4
-        self.receive_window = 30
+        self.receive_window = 5
         self.sending_flag = True
 
     # connect to the specific server
@@ -32,6 +32,7 @@ class QUICClient:
             num = 0
             send_packet = b""
             check_list.clear()
+            print("sending flag: ", self.sending_flag)
             while self.sending_flag and num < self.congestion_window:
                 flag = False
                 for stream_id, data in self.send_buffer.items():
@@ -60,6 +61,7 @@ class QUICClient:
             if num > 0:
                 send_packet = str(num).encode('utf-8') + send_packet
                 self.socket_.sendto(send_packet, self.server_addr)
+                print("sending now")
                     
             self.socket_.settimeout(3)
             ack_num = 0
@@ -131,7 +133,14 @@ class QUICClient:
 if __name__ == "__main__":
     client = QUICClient()
     client.connect(("127.0.0.1", 30000))
-    recv_id, recv_data = client.recv()
-    print(recv_data.decode("utf-8")) # SOME DATA, MAY EXCEED 1500 bytes
-    client.send(2, b"Hello Server!")
-    client.close()
+    #recv_id, recv_data = client.recv()
+    #print(recv_data.decode("utf-8")) # SOME DATA, MAY EXCEED 1500 bytes
+    client.send(2, b"Hello Server!0")
+    client.send(3, b"Hello Server!1")
+    client.send(4, b"Hello Server!2")
+    client.send(5, b"Hello Server!3")
+    client.send(6, b"Hello Server!4")
+    client.send(7, b"Hello Server!5")
+    client.send(8, b"Hello Server!6")
+    client.send(9, b"Hello Server!7")
+    #client.close()
