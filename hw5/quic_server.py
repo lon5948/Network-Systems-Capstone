@@ -21,7 +21,7 @@ class QUICServer:
         recv_window_size, msg = struct.unpack("i12s", hello)
         self.receive_window = recv_window_size
         print("Message:", msg.decode("utf-8"), "from", self.client_addr)
-        hello_ack = b"Hello ACK"
+        hello_ack = b"Hello ACK"        
         self.socket_.sendto(hello_ack, self.client_addr)
         self.threading = threading.Thread(target=self.func)
         self.threading.start()

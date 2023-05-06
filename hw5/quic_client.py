@@ -101,7 +101,7 @@ class QUICClient:
                         if del_flag == False:
                             del self.send_buffer[stream_id]
                     
-            if num > 0 and float(ack_num)/num < 0.6:
+            if num > 0 and float(ack_num)/num < 0.5:
                 self.congestion_window = int(self.congestion_window/2)
                     
     # call this method to send data, with non-reputation stream_id
