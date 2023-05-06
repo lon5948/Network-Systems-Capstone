@@ -37,6 +37,7 @@ class QUICServer:
             send_packet = b""
             check_list.clear()
             while self.sending_flag and num < self.congestion_window:
+                print("window size:",self.congestion_window)
                 flag = False
                 for stream_id, data in self.send_buffer.items():
                     if data['next'] == len(data['payload']):

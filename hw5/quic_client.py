@@ -17,7 +17,7 @@ class QUICClient:
         msg = b"Client Hello" 
         hello = struct.pack("i12s", self.receive_window, msg)
         self.socket_.sendto(hello, self.server_addr)
-        hello_ack, server_addr = self.socket_.recvfrom(2048)
+        hello_ack, server_addr = self.socket_.recvfrom(BUFFER_SIZE)
         print("Message:", hello_ack.decode("utf-8"), "from", self.server_addr)
         self.threading = threading.Thread(target=self.func)
         self.threading.start()
