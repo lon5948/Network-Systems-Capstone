@@ -65,7 +65,6 @@ class QUICServer:
                     break
             if num > 0:
                 send_packet = str(num).encode('utf-8') + send_packet
-                #print("packet size", num, "send done")
                 self.socket_.sendto(send_packet, self.client_addr)
                     
             self.socket_.settimeout(3)
@@ -81,6 +80,7 @@ class QUICServer:
                     stream_id, ftype, offset, finish, payload = struct.unpack("i3sii1500s", recv_packet[1516*i+1:1516*(i+1)+1])
                     ftype = ftype.decode('utf-8')
                     if ftype == "STR":
+                        print("receive stream frame")
                         if stream_id not in self.recv_buffer:
                             self.recv_buffer[stream_id] = {'finish':False, 'total_num':0, 'payload':dict()}
                         if finish == 1:
@@ -97,6 +97,7 @@ class QUICServer:
                         ack = b"1" + ack
                         self.socket_.sendto(ack, self.client_addr)
                     elif ftype == "ACK":
+                        print("receive ACK frame")
                         self.sending_flag = (finish==0)
                         ack_num += 1
                         self.send_buffer[stream_id]['wait_ack'][offset] = True
@@ -139,7 +140,10 @@ if __name__ == "__main__":
     server = QUICServer()
     server.listen(("", 30000))
     server.accept()
-    #server.send(1, b"SOME DATA, MAY EXCEED 1500 bytes")
-    #recv_id, recv_data = server.recv()
-    #print(recv_data.decode("utf-8")) # Hello Server!
-    #server.close() 
+    server.send(1, b"SOME DATA, MAY EXCEED 1500 bytes\n")
+    recv_id, recv_data = server.recv()
+    print(recv_data.decode("utf-8")) # Hello Server!
+    server.send(3, b"TEST SERVER AGAIN\n")
+    recv_id, recv_data = server.recv()
+    print(recv_data.decode("utf-8")) 
+    server.close() 

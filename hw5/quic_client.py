@@ -32,7 +32,6 @@ class QUICClient:
             num = 0
             send_packet = b""
             check_list.clear()
-            print("sending flag: ", self.sending_flag)
             while self.sending_flag and num < self.congestion_window:
                 flag = False
                 for stream_id, data in self.send_buffer.items():
@@ -63,7 +62,6 @@ class QUICClient:
             if num > 0:
                 send_packet = str(num).encode('utf-8') + send_packet
                 self.socket_.sendto(send_packet, self.server_addr)
-                print("sending now")
                     
             self.socket_.settimeout(3)
             ack_num = 0
@@ -78,6 +76,7 @@ class QUICClient:
                     stream_id, ftype, offset, finish, payload = struct.unpack("i3sii1500s", recv_packet[1516*i+1:1516*(i+1)+1])
                     ftype = ftype.decode('utf-8')
                     if ftype == "STR":
+                        print("receive stream frame")
                         if stream_id not in self.recv_buffer:
                             self.recv_buffer[stream_id] = {'finish':False, 'total_num':0, 'payload':dict()}
                         if finish == 1:
@@ -94,6 +93,7 @@ class QUICClient:
                         ack = b"1" + ack
                         self.socket_.sendto(ack, self.server_addr)
                     elif ftype == "ACK":
+                        print("receive ACK frame")
                         self.sending_flag = (finish==0)
                         ack_num += 1
                         self.send_buffer[stream_id]['wait_ack'][offset] = True
@@ -135,14 +135,10 @@ class QUICClient:
 if __name__ == "__main__":
     client = QUICClient()
     client.connect(("127.0.0.1", 30000))
-    #recv_id, recv_data = client.recv()
-    #print(recv_data.decode("utf-8")) # SOME DATA, MAY EXCEED 1500 bytes
-    client.send(2, b"Hello Server!0")
-    client.send(3, b"Hello Server!1")
-    client.send(4, b"Hello Server!2")
-    client.send(5, b"Hello Server!3")
-    client.send(6, b"Hello Server!4")
-    client.send(7, b"Hello Server!5")
-    client.send(8, b"Hello Server!6")
-    client.send(9, b"Hello Server!7")
-    #client.close()
+    recv_id, recv_data = client.recv()
+    print(recv_data.decode("utf-8")) # SOME DATA, MAY EXCEED 1500 bytes
+    client.send(2, b"Hello Server!\n")
+    recv_id, recv_data = client.recv()
+    print(recv_data.decode("utf-8")) # SOME DATA, MAY EXCEED 1500 bytes
+    client.send(4, b"TEST CLIENT AGAIN!\n")
+    client.close()
