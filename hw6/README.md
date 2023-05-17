@@ -48,7 +48,7 @@ Design and implement a pair of web client program and web server program that su
     - E.g., stream id = 1,3,5,7,9…
 
 #### HTTP/2 Frame Format
-https://github.com/lon5948/Network-Systems-Capstone/blob/main/hw6/HTTP2_format.jpg
+![image](https://github.com/lon5948/Network-Systems-Capstone/blob/main/hw6/HTTP2_format.jpg)
 
 #### HTTP/2 Frame Header
 - Length is the payload size in bytes.
@@ -89,7 +89,7 @@ https://github.com/lon5948/Network-Systems-Capstone/blob/main/hw6/HTTP2_format.j
 - Unlike TCP, when a packet is lost in a stream of QUIC, it does not affect the reception of data in other streams.
 
 #### HTTP/3 Frame Format
-![image]([https://github.com/lon5948/Uber-E/blob/main/Model/Relational%20model.png](https://github.com/lon5948/Network-Systems-Capstone/blob/main/hw6/HTTP3_format.jpg))
+![image](https://github.com/lon5948/Network-Systems-Capstone/blob/main/hw6/HTTP3_format.jpg)
 
 #### HTTP/3 Frame Header
 - Length is the payload size in bytes.
