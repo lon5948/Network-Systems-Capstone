@@ -6,7 +6,7 @@ def receive_data(client_socket, directory):
         request = client_socket.recv(4096)
         request = request.decode()
         print("request:", request)
-        request_path = request.split(' ')[0]
+        request_path = request.split(' ')[1]
         print("request path: ",request_path)
         if request_path == "/":
             print("root dir")
@@ -14,6 +14,8 @@ def receive_data(client_socket, directory):
             response_content_type = b"Content-Type: text/html\r\n"
             response_body = "<html><header></header><body>"
             files = os.listdir(directory)
+            print(directory)
+            print(files)
             for i in range(3):
                 response_body += f"<a href='/static/{files[i]}'>{files[i]}</a>"
                 if i == 2:
