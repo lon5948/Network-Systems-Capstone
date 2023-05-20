@@ -22,8 +22,8 @@ class HTTPClient(): # For HTTP/1.X
         response.status = data[0][8:]
         response.headers = { data[1].split(' ')[0].lower()[:-1]: data[1].split(' ')[1].lower() }
         response.body_length = int(data[2].split(' ')[1])
-        response.body = data[4].encode()
-        print(data[4])
+        for i in range(4, len(data)):
+            response.body += data[i].encode()
         response.recv_length += len(response.body)
         if response.recv_length == response.body_length:
             response.complete = True
@@ -73,8 +73,8 @@ class Response():
     def get_remain_body(self):
         content = self.socket.recv(BUFFER_SIZE)
         self.recv_length += len(content)
-        #print("body length: ", self.body_length)
-        #print("receive length: ", self.recv_length)
+        print("body length: ", self.body_length)
+        print("receive length: ", self.recv_length)
         if self.recv_length == self.body_length:
             self.complete = True
             self.socket.close()
