@@ -7,7 +7,9 @@ def receive_data(client_socket, directory):
         request = request.decode()
         print("request:", request)
         request_path = request.split(' ')[0]
+        print("request path: ",request_path)
         if request_path == "/":
+            print("root dir")
             response_status = b"HTTP/1.0 200 OK\r\n"
             response_content_type = b"Content-Type: text/html\r\n"
             response_body = "<html><header></header><body>"
@@ -20,10 +22,13 @@ def receive_data(client_socket, directory):
             response_body += "</body></html>"
             response_body = response_body.encode()
             response_content_length = f"Content-Length: {len(response_body)}\r\n\r\n".encode()
+            print(type(response_status), type(response_content_type), type(response_content_length), type(response_body))
             response = response_status + response_content_type + response_content_length + response_body
             client_socket.send(response)
+            print("Server finish to send the response.")
         elif request_path.startswith('/static'):
             full_path = directory + request_path[7:]
+            print("full path: ", full_path)
             file_size = os.path.getsize(full_path)
             response_status = b"HTTP/1.0 200 OK\r\n"
             response_content_type = b"Content-Type: text/plain\r\n"
@@ -33,15 +38,19 @@ def receive_data(client_socket, directory):
                     if not response_body:
                         break
                     response_content_length = f"Content-Length: {file_size}\r\n\r\n".encode()
+                    print(type(response_status), type(response_content_type), type(response_content_length), type(response_body))
                     response = response_status + response_content_type + response_content_length + response_body
                     client_socket.send(response)
+                    print("Server finish to send the response.")
         else:
+            print("404 not found")
             response_status = b"HTTP/1.0 404 Not Found\r\n"
             response_content_type = b"Content-Type: text/html\r\n"
-            response_body = "<html><header> </header><body></body></html>"
+            response_body = "<html><header> </header><body></body></html>".encode()
             response_content_length = f"Content-Length: {len(response_body)}\r\n\r\n".encode()
             response = response_status + response_content_type + response_content_length + response_body
             client_socket.send(response)
+            print("Server finish to send the response.")
 
 class HTTPServer():
     def __init__(self, host="127.0.0.1", port=8080) -> None:

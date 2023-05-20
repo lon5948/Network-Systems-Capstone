@@ -6,7 +6,6 @@ import socket
 # set socket time 5
 # how to check the last packet(param complete)
 
-
 class HTTPClient(): # For HTTP/1.X
     def get(self, url, headers=None, stream=False):
         # Send the request and return the response (Object)
@@ -15,20 +14,30 @@ class HTTPClient(): # For HTTP/1.X
         server_ip, server_port, path = self.parse_url(url)
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect((server_ip, server_port))
+        print("Client is conneted.")
         request = f"GET {path} HTTP/1.0\r\nHost: {server_ip}\r\n'Content-Type': 'application/json'\r\n'Content-Length': '0'"
         client_socket.send(request.encode())
+        print("Client finish to send request.")
         data = client_socket.recv(4096).decode()
+        print("Client receive the response", data)
         data = data.split('\r\n')
         response = Response(client_socket, stream)
         response.version = data[0].split(' ')[0]
+        print("response.version", response.version)
         response.status = data[0][8:]
-        response.headers[data[1].split(' ')[0]] = data[1].split(' ')[1]
+        print("response.status", response.status)
+        response.headers = { data[1].split(' ')[0]: data[1].split(' ')[1] }
+        print("response.headers", response.headers)
         response.body_length = int(data[2].split(' ')[1])
+        print("response.body_length", response.body_length)
         response.recv_length += len(data[4])
+        print("response.recv_length", response.recv_length)
         if response.recv_length == response.body_length:
             response.complete = True
         response.body = data[4].decode()
+        print("response.body", response.body)
         client_socket.close()
+        print("Client is closed.")
         return response
     
     def parse_url(self, url):
@@ -38,9 +47,9 @@ class HTTPClient(): # For HTTP/1.X
             url = url[8:]
         url = url.split(':')
         ip = url[0]
-        port = int(url[1].split('/')[0])
+        port = url[1].split('/')[0]
         path = url[1][len(port):]
-        return ip, port, path
+        return ip, int(port), path
 
 class Response():
     def __init__(self, socket, stream) -> None:
