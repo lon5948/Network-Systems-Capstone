@@ -86,5 +86,5 @@ class Response():
             self.complete = True
             self.socket.close()
             print("Client is closed.")
-        return content.decode()
+        return content
 
