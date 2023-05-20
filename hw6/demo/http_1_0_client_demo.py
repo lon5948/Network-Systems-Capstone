@@ -20,6 +20,9 @@ if __name__ == '__main__':
         os.remove(file)
 
     for file in file_list:
+        #
+        print(file)
+        
         response = client.get(f"http://127.0.0.1:8080/static/{file}", stream=True)
         file_path = f"{target_path}/{file}"
         if response:

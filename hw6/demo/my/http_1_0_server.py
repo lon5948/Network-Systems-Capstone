@@ -5,8 +5,9 @@ def receive_data(client_socket, directory):
     while True:
         try:
             request = client_socket.recv(4096)
-            #if len(request) == 1:
-            #    continue
+            if len(request) == 0:
+                client_socket.close()
+                break
             print(request.decode())
             request = request.decode().split(' ')
             request_path = request[1]
@@ -64,8 +65,9 @@ class HTTPServer():
             self.client_socket, client_addr = self.server_socket.accept()
             print(f"{client_addr} is connected.")
             self.client_socket.settimeout(5)
-            self.thread = threading.Thread(target=receive_data, args=(self.client_socket, self.directory, ))
-            self.thread.start()
+            thread = threading.Thread(target=receive_data, args=(self.client_socket, self.directory, ))
+            thread.start()
+            thread.join()
 
     def set_static(self, path):
         # Set the static directory so that when the client sends a GET request to the resource
@@ -74,6 +76,5 @@ class HTTPServer():
 
     def close(self):
         # Close the server socket.
-        self.thread.join()
         self.server_socket.close()
         self.client_socket.close()
