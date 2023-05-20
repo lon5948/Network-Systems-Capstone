@@ -16,14 +16,13 @@ class HTTPClient(): # For HTTP/1.X
         request = f"GET {path} HTTP/1.0\r\nHost: {server_ip}\r\n'Content-Type': 'application/json'\r\n'Content-Length': '0'"
         client_socket.send(request.encode())
         data = client_socket.recv(BUFFER_SIZE).decode()
-        data = data.split('\r\n')
+        data = data.split('\r\n', maxsplit=4)
         response = Response(client_socket, stream)
         response.version = data[0].split(' ')[0]
         response.status = data[0][8:]
         response.headers = { data[1].split(' ')[0].lower()[:-1]: data[1].split(' ')[1].lower() }
         response.body_length = int(data[2].split(' ')[1])
-        for i in range(4, len(data)):
-            response.body += (data[i]+'\r\n').encode()
+        response.body += data[4].encode()
         response.recv_length += len(response.body)
         if response.recv_length == response.body_length:
             response.complete = True
