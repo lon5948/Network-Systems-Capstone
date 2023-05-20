@@ -14,7 +14,6 @@ class HTTPClient(): # For HTTP/1.X
         server_ip, server_port, path = self.parse_url(url)
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect((server_ip, server_port))
-        print("Client is conneted.")
         request = f"GET {path} HTTP/1.0\r\nHost: {server_ip}\r\n'Content-Type': 'application/json'\r\n'Content-Length': '0'"
         client_socket.send(request.encode())
         data = client_socket.recv(4096).decode()

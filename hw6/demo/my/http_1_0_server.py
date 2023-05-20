@@ -5,8 +5,8 @@ def receive_data(client_socket, directory):
     while True:
         request = client_socket.recv(4096)
         request = request.decode().split(' ')
-        print("request: ",request)
-        if len(request) == 0:
+        print(request)
+        if len(request) == 1:
             continue
         request_path = request[1]
         if request_path == "/":
@@ -54,10 +54,10 @@ class HTTPServer():
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(self.server_addr)
         self.server_socket.listen(10)
-        print('Wait for connecting...')
         while True:
             self.client_socket, client_addr = self.server_socket.accept()
             print(f"{client_addr} is connected.")
+            self.client_socket.settimeout(5)
             self.thread = threading.Thread(target=receive_data, args=(self.client_socket,self.directory, ))
             self.thread.start()
 
