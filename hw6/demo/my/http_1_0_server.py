@@ -8,7 +8,6 @@ def receive_data(client_socket, directory):
             if len(request) == 0:
                 client_socket.close()
                 break
-            print(request.decode())
             request = request.decode().split(' ')
             request_path = request[1]
             if request_path == "/":
