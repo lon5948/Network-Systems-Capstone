@@ -32,11 +32,11 @@ class HTTPClient(): # For HTTP/1.X
         print("response.body_length", response.body_length)
         response.recv_length += len(data[4])
         print("response.recv_length", response.recv_length)
+        response.body = data[4].encode()
         if response.recv_length == response.body_length:
             response.complete = True
-        response.body = data[4].encode()
-        client_socket.close()
-        print("Client is closed.")
+            client_socket.close()
+            print("Client is closed.")
         return response
     
     def parse_url(self, url):
@@ -84,5 +84,7 @@ class Response():
         self.recv_length += len(content)
         if self.recv_length == self.body_length:
             self.complete = True
+            self.socket.close()
+            print("Client is closed.")
         return content.decode()
 
