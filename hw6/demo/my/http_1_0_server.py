@@ -5,7 +5,6 @@ def receive_data(client_socket, directory):
     while True:
         request = client_socket.recv(4096)
         request = request.decode()
-        print("request:", request)
         request_path = request.split(' ')[1]
         print("request path: ",request_path)
         if request_path == "/":
@@ -14,8 +13,6 @@ def receive_data(client_socket, directory):
             response_content_type = b"Content-Type: text/html\r\n"
             response_body = "<html><header></header><body>"
             files = os.listdir(directory)
-            print(directory)
-            print(files)
             for i in range(3):
                 response_body += f"<a href='/static/{files[i]}'>{files[i]}</a>"
                 if i == 2:
@@ -24,7 +21,6 @@ def receive_data(client_socket, directory):
             response_body += "</body></html>"
             response_body = response_body.encode()
             response_content_length = f"Content-Length: {len(response_body)}\r\n\r\n".encode()
-            print(type(response_status), type(response_content_type), type(response_content_length), type(response_body))
             response = response_status + response_content_type + response_content_length + response_body
             client_socket.send(response)
             print("Server finish to send the response.")
@@ -40,7 +36,6 @@ def receive_data(client_socket, directory):
                     if not response_body:
                         break
                     response_content_length = f"Content-Length: {file_size}\r\n\r\n".encode()
-                    print(type(response_status), type(response_content_type), type(response_content_length), type(response_body))
                     response = response_status + response_content_type + response_content_length + response_body
                     client_socket.send(response)
                     print("Server finish to send the response.")

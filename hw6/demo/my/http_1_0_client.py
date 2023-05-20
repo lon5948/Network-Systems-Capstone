@@ -19,7 +19,7 @@ class HTTPClient(): # For HTTP/1.X
         client_socket.send(request.encode())
         print("Client finish to send request.")
         data = client_socket.recv(4096).decode()
-        print("Client receive the response", data)
+        print("Client receive the response")
         data = data.split('\r\n')
         response = Response(client_socket, stream)
         response.version = data[0].split(' ')[0]
@@ -35,7 +35,6 @@ class HTTPClient(): # For HTTP/1.X
         if response.recv_length == response.body_length:
             response.complete = True
         response.body = data[4].encode()
-        print("response.body", response.body)
         client_socket.close()
         print("Client is closed.")
         return response
