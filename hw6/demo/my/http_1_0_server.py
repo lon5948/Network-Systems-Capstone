@@ -4,11 +4,11 @@ CHUNK_SIZE = 4096
 def receive_data(client_socket, directory):
     while True:
         request = client_socket.recv(4096)
-        request = request.decode()
+        request = request.decode().split(' ')
         print("request: ",request)
-        print(request.split(' '))
-        print('----------------------------')
-        request_path = request.split(' ')[1]
+        if len(request) == 0:
+            continue
+        request_path = request[1]
         if request_path == "/":
             response_status = b"HTTP/1.0 200 OK\r\n"
             response_content_type = b"Content-Type: text/html\r\n"
@@ -58,8 +58,8 @@ class HTTPServer():
         while True:
             self.client_socket, client_addr = self.server_socket.accept()
             print(f"{client_addr} is connected.")
-            thread = threading.Thread(target=receive_data, args=(self.client_socket,self.directory, ))
-            thread.start()
+            self.thread = threading.Thread(target=receive_data, args=(self.client_socket,self.directory, ))
+            self.thread.start()
 
     def set_static(self, path):
         # Set the static directory so that when the client sends a GET request to the resource
@@ -68,5 +68,6 @@ class HTTPServer():
 
     def close(self):
         # Close the server socket.
+        self.thread.join()
         self.server_socket.close()
         self.client_socket.close()
