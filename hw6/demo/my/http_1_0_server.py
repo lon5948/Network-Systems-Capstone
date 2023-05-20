@@ -80,6 +80,7 @@ class HTTPServer():
                     break
             else:
                 break
+        print('finish')
 
     def set_static(self, path):
         # Set the static directory so that when the client sends a GET request to the resource
