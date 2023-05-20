@@ -41,9 +41,9 @@ def receive_data(client_socket, directory):
                             response_content_length = f"Content-Length: {file_size}\r\n\r\n".encode()
                             response = response_status + response_content_type + response_content_length + response_body
                             flag = False
+                            print(response, '\n')
                         else:
                             response = response_body
-                        print(response, '\n')
                         client_socket.send(response)
             else:
                 response_status = b"HTTP/1.0 404 Not Found\r\n"
