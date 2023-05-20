@@ -3,7 +3,6 @@ import socket
 # Question:
 # get_full_body(), get_stream_content() should modify or not ?
 # does server need to consider param stream
-# set socket time 5
 # how to check the last packet(param complete)
 
 class HTTPClient(): # For HTTP/1.X
