@@ -72,9 +72,10 @@ class Response():
 
     def get_remain_body(self):
         content = self.socket.recv(BUFFER_SIZE)
+        print(content.decode())
         self.recv_length += len(content)
-        print("body length: ", self.body_length)
-        print("receive length: ", self.recv_length)
+        #print("body length: ", self.body_length)
+        #print("receive length: ", self.recv_length)
         if self.recv_length == self.body_length:
             self.complete = True
             self.socket.close()

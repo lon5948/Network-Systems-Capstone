@@ -43,6 +43,7 @@ def receive_data(client_socket, directory):
                             flag = False
                         else:
                             response = response_body
+                        print(response, '\n')
                         client_socket.send(response)
             else:
                 response_status = b"HTTP/1.0 404 Not Found\r\n"
