@@ -26,7 +26,7 @@ class HTTPClient(): # For HTTP/1.X
         print("response.version", response.version)
         response.status = data[0][8:]
         print("response.status", response.status)
-        response.headers = { data[1].split(' ')[0].lower(): data[1].split(' ')[1].lower() }
+        response.headers = { data[1].split(' ')[0].lower()[:-1]: data[1].split(' ')[1].lower() }
         print("response.headers", response.headers)
         response.body_length = int(data[2].split(' ')[1])
         print("response.body_length", response.body_length)
@@ -34,7 +34,7 @@ class HTTPClient(): # For HTTP/1.X
         print("response.recv_length", response.recv_length)
         if response.recv_length == response.body_length:
             response.complete = True
-        response.body = data[4]
+        response.body = data[4].encode()
         print("response.body", response.body)
         client_socket.close()
         print("Client is closed.")
