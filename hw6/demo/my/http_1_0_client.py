@@ -23,7 +23,7 @@ class HTTPClient(): # For HTTP/1.X
         response.headers = { data[1].split(' ')[0].lower()[:-1]: data[1].split(' ')[1].lower() }
         response.body_length = int(data[2].split(' ')[1])
         for i in range(4, len(data)):
-            response.body += data[i].encode()
+            response.body += (data[i]+'\r\n').encode()
         response.recv_length += len(response.body)
         if response.recv_length == response.body_length:
             response.complete = True
