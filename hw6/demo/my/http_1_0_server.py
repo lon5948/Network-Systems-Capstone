@@ -5,9 +5,9 @@ def receive_data(client_socket, directory):
     while True:
         request = client_socket.recv(4096)
         request = request.decode().split(' ')
-        print(request)
         if len(request) == 1:
             continue
+        print(request)
         request_path = request[1]
         if request_path == "/":
             response_status = b"HTTP/1.0 200 OK\r\n"
@@ -58,7 +58,7 @@ class HTTPServer():
             self.client_socket, client_addr = self.server_socket.accept()
             print(f"{client_addr} is connected.")
             self.client_socket.settimeout(5)
-            self.thread = threading.Thread(target=receive_data, args=(self.client_socket,self.directory, ))
+            self.thread = threading.Thread(target=receive_data, args=(self.client_socket, self.directory, ))
             self.thread.start()
 
     def set_static(self, path):
