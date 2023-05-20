@@ -17,21 +17,14 @@ class HTTPClient(): # For HTTP/1.X
         print("Client is conneted.")
         request = f"GET {path} HTTP/1.0\r\nHost: {server_ip}\r\n'Content-Type': 'application/json'\r\n'Content-Length': '0'"
         client_socket.send(request.encode())
-        print("Client finish to send request.")
         data = client_socket.recv(4096).decode()
-        print("Client receive the response")
         data = data.split('\r\n')
         response = Response(client_socket, stream)
         response.version = data[0].split(' ')[0]
-        print("response.version", response.version)
         response.status = data[0][8:]
-        print("response.status", response.status)
         response.headers = { data[1].split(' ')[0].lower()[:-1]: data[1].split(' ')[1].lower() }
-        print("response.headers", response.headers)
         response.body_length = int(data[2].split(' ')[1])
-        print("response.body_length", response.body_length)
         response.recv_length += len(data[4])
-        print("response.recv_length", response.recv_length)
         response.body = data[4].encode()
         if response.recv_length == response.body_length:
             response.complete = True
