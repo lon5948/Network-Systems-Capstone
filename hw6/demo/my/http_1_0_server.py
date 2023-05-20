@@ -6,6 +6,8 @@ def receive_data(client_socket, directory):
         request = client_socket.recv(4096)
         request = request.decode()
         print("request: ",request)
+        print(request.split(' '))
+        print('----------------------------')
         request_path = request.split(' ')[1]
         if request_path == "/":
             response_status = b"HTTP/1.0 200 OK\r\n"
