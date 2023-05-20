@@ -1,10 +1,11 @@
 import socket, threading, sys, os
 CHUNK_SIZE = 4096
+BUFFER_SIZE = 8192
 
 def receive_data(client_socket, directory):
     while True:
         try:
-            request = client_socket.recv(4096)
+            request = client_socket.recv(BUFFER_SIZE)
             if len(request) == 0:
                 client_socket.close()
                 break

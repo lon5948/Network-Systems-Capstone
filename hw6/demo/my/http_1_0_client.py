@@ -1,5 +1,5 @@
 import socket
-
+BUFFER_SIZE = 8192
 # Question:
 # get_full_body(), get_stream_content() should modify or not ?
 # does server need to consider param stream
@@ -15,7 +15,7 @@ class HTTPClient(): # For HTTP/1.X
         client_socket.connect((server_ip, server_port))
         request = f"GET {path} HTTP/1.0\r\nHost: {server_ip}\r\n'Content-Type': 'application/json'\r\n'Content-Length': '0'"
         client_socket.send(request.encode())
-        data = client_socket.recv(4096).decode()
+        data = client_socket.recv(BUFFER_SIZE).decode()
         data = data.split('\r\n')
         response = Response(client_socket, stream)
         response.version = data[0].split(' ')[0]
@@ -72,7 +72,7 @@ class Response():
         return content # the part content of the HTTP response body
 
     def get_remain_body(self):
-        content = self.socket.recv(4096)
+        content = self.socket.recv(BUFFER_SIZE)
         self.recv_length += len(content)
         print("body length: ", self.body_length)
         print("receive length: ", self.recv_length)
