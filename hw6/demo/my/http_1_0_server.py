@@ -75,8 +75,8 @@ class HTTPServer():
             thread.start()
             self.threads.append(thread)
 
-            for thread in self.threads:
-                if thread.is_alive():
+            for th in self.threads:
+                if th.is_alive():
                     break
             else:
                 break
