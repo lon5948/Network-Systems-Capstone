@@ -1,4 +1,4 @@
-import socket, threading, sys, os
+import socket, threading, os, time
 CHUNK_SIZE = 4096
 BUFFER_SIZE = 8192
 
@@ -81,10 +81,11 @@ class HTTPServer():
                 alive_flag = True
                 for th in self.threads:
                     if th.is_alive():
+                        print("alive")
                         alive_flag = False
-                        break
                 if len(self.threads) > 0 and alive_flag:
                     break
+                time.sleep(1)
         print('finish')
 
     def set_static(self, path):
