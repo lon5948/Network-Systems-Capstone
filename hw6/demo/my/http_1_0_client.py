@@ -1,15 +1,8 @@
 import socket
 BUFFER_SIZE = 8192
-# Question:
-# get_full_body(), get_stream_content() should modify or not ?
-# does server need to consider param stream
-# how to check the last packet(param complete)
 
-class HTTPClient(): # For HTTP/1.X
+class HTTPClient(): # For HTTP/1.0
     def get(self, url, headers=None, stream=False):
-        # Send the request and return the response (Object)
-        # url = "http://127.0.0.1:8080/static/xxx.txt"
-        # If stream=True, the response should be returned immediately after the full headers have been received.
         server_ip, server_port, path = self.parse_url(url)
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client_socket.connect((server_ip, server_port))
@@ -45,14 +38,13 @@ class Response():
         self.socket = socket
         self.stream = stream
         # fieleds
-        self.version = "" # e.g. "HTTP/1.0"
-        self.status = ""  # e.g., "200 OK"
-        self.headers = {} # e.g., {content-type: application/json}
-        self.body = b""  # e.g. "{'id': '123', 'key':'456'}"
+        self.version = "" 
+        self.status = ""  
+        self.headers = {} 
+        self.body = b""  
         self.body_length = 0
         self.recv_length = 0
         self.complete = False
-        self.__reamin_bytes = b""
 
     def get_full_body(self): # used for handling short body
         if self.stream or not self.complete:

@@ -71,10 +71,10 @@ class HTTPServer():
         self.server_socket.listen(10)
         while True:
             try:
-                self.client_socket, client_addr = self.server_socket.accept()
+                client_socket, client_addr = self.server_socket.accept()
                 print(f"{client_addr} is connected.")
-                self.client_socket.settimeout(5)
-                thread = threading.Thread(target=receive_data, args=(self.client_socket, self.directory, ))
+                client_socket.settimeout(5)
+                thread = threading.Thread(target=receive_data, args=(client_socket, self.directory, ))
                 self.threads.append(thread)
                 thread.start()
                 thread.join()
@@ -96,4 +96,3 @@ class HTTPServer():
     def close(self):
         # Close the server socket.
         self.server_socket.close()
-        self.client_socket.close()
