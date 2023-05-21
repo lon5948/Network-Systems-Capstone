@@ -8,6 +8,7 @@ def receive_data(client_socket, directory):
             request = client_socket.recv(BUFFER_SIZE)
             if len(request) == 0:
                 client_socket.close()
+                print("Client is closed.")
                 break
             request = request.decode().split(' ')
             request_path = request[1]
