@@ -67,6 +67,7 @@ class HTTPServer():
         # Create the server socket and start accepting connections.
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(self.server_addr)
+        self.server_socket.setblocking(0)
         self.server_socket.listen(10)
         while True:
             try:
