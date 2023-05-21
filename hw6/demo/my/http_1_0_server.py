@@ -82,9 +82,9 @@ class HTTPServer():
                 alive_flag = True
                 for th in self.threads:
                     if th.is_alive():
-                        print("alive")
                         alive_flag = False
-                if len(self.threads) > 0 and alive_flag:
+                        break
+                if len(self.threads) == 4 and alive_flag:
                     break
                 time.sleep(1)
         print('finish')
