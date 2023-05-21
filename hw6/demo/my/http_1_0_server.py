@@ -66,20 +66,23 @@ class HTTPServer():
         # Create the server socket and start accepting connections.
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(self.server_addr)
+        self.server_socket.setblocking(0)
         self.server_socket.listen(10)
         while True:
-            self.client_socket, client_addr = self.server_socket.accept()
-            print(f"{client_addr} is connected.")
-            self.client_socket.settimeout(5)
-            thread = threading.Thread(target=receive_data, args=(self.client_socket, self.directory, ))
-            thread.start()
-            self.threads.append(thread)
-
-            for th in self.threads:
-                if th.is_alive():
+            try:
+                self.client_socket, client_addr = self.server_socket.accept()
+                print(f"{client_addr} is connected.")
+                self.client_socket.settimeout(5)
+                thread = threading.Thread(target=receive_data, args=(self.client_socket, self.directory, ))
+                self.threads.append(thread)
+                thread.start()
+                thread.join()
+            except BlockingIOError:
+                for th in self.threads:
+                    if th.is_alive():
+                        self.threads.remove(th)
+                if len(self.threads) == 0:
                     break
-            else:
-                break
         print('finish')
 
     def set_static(self, path):
