@@ -13,7 +13,7 @@ def receive_data(client_socket, directory):
             request = request.decode().split(' ')
             request_path = request[1]
             if request_path == "/":
-                response_status = b"HTTP/1.0 200 OK\r\n"
+                response_status = b"HTTP/1.1 200 OK\r\n"
                 response_content_type = b"Content-Type: text/html\r\n"
                 response_body = "<html><header></header><body>"
                 files = os.listdir(directory)
@@ -30,7 +30,7 @@ def receive_data(client_socket, directory):
             elif request_path.startswith('/static'):
                 full_path = directory + request_path[7:]
                 file_size = os.path.getsize(full_path)
-                response_status = b"HTTP/1.0 200 OK\r\n"
+                response_status = b"HTTP/1.1 200 OK\r\n"
                 response_content_type = b"Content-Type: text/plain\r\n"
                 with open(full_path, "rb") as file:
                     flag = True
@@ -46,7 +46,7 @@ def receive_data(client_socket, directory):
                             response = response_body
                         client_socket.send(response)
             else:
-                response_status = b"HTTP/1.0 404 Not Found\r\n"
+                response_status = b"HTTP/1.1 404 Not Found\r\n"
                 response_content_type = b"Content-Type: text/html\r\n"
                 response_body = "<html><header> </header><body></body></html>".encode()
                 response_content_length = f"Content-Length: {len(response_body)}\r\n\r\n".encode()

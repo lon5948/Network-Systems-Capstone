@@ -1,7 +1,7 @@
 import socket
 BUFFER_SIZE = 8192
 
-class HTTPClient(): # For HTTP/1.0
+class HTTPClient(): # For HTTP/1.1
     def __init__(self) -> None:
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.num = 0
@@ -9,7 +9,7 @@ class HTTPClient(): # For HTTP/1.0
         server_ip, server_port, path = self.parse_url(url)
         if path == '/':
             self.client_socket.connect((server_ip, server_port))
-        request = f"GET {path} HTTP/1.0\r\nHost: {server_ip}\r\n'Content-Type': 'application/json'\r\n'Content-Length': '0'"
+        request = f"GET {path} HTTP/1.1\r\nHost: {server_ip}\r\n'Content-Type': 'application/json'\r\n'Content-Length': '0'"
         self.num += 1
         self.client_socket.send(request.encode())
         data = self.client_socket.recv(BUFFER_SIZE).decode()
