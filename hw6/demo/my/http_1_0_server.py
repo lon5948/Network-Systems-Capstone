@@ -87,7 +87,6 @@ class HTTPServer():
                 if len(self.threads) == 4 and alive_flag:
                     break
                 time.sleep(1)
-        print('finish')
 
     def set_static(self, path):
         # Set the static directory so that when the client sends a GET request to the resource
