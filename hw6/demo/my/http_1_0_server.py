@@ -66,7 +66,6 @@ class HTTPServer():
         # Create the server socket and start accepting connections.
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(self.server_addr)
-        self.server_socket.setblocking(0)
         self.server_socket.listen(10)
         while True:
             try:
@@ -78,10 +77,12 @@ class HTTPServer():
                 thread.start()
                 thread.join()
             except BlockingIOError:
+                alive_flag = True
                 for th in self.threads:
                     if th.is_alive():
-                        self.threads.remove(th)
-                if len(self.threads) == 0:
+                        alive_flag = False
+                        break
+                if len(self.threads) > 0 and alive_flag:
                     break
         print('finish')
 
