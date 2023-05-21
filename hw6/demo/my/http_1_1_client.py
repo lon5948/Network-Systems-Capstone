@@ -2,15 +2,19 @@ import socket
 BUFFER_SIZE = 8192
 
 class HTTPClient(): # For HTTP/1.0
+    def __init__(self) -> None:
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.num = 0
     def get(self, url, headers=None, stream=False):
         server_ip, server_port, path = self.parse_url(url)
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client_socket.connect((server_ip, server_port))
+        if path == '/':
+            self.client_socket.connect((server_ip, server_port))
         request = f"GET {path} HTTP/1.0\r\nHost: {server_ip}\r\n'Content-Type': 'application/json'\r\n'Content-Length': '0'"
-        client_socket.send(request.encode())
-        data = client_socket.recv(BUFFER_SIZE).decode()
+        self.num += 1
+        self.client_socket.send(request.encode())
+        data = self.client_socket.recv(BUFFER_SIZE).decode()
         data = data.split('\r\n', maxsplit=4)
-        response = Response(client_socket, stream)
+        response = Response(self.client_socket, stream, self.num)
         response.version = data[0].split(' ')[0]
         response.status = data[0][8:]
         response.headers = { data[1].split(' ')[0].lower()[:-1]: data[1].split(' ')[1].lower() }
@@ -19,7 +23,8 @@ class HTTPClient(): # For HTTP/1.0
         response.recv_length += len(response.body)
         if response.recv_length == response.body_length:
             response.complete = True
-            client_socket.close()
+            if self.num == 4:
+                self.client_socket.close()
         return response
     
     def parse_url(self, url):
@@ -34,9 +39,10 @@ class HTTPClient(): # For HTTP/1.0
         return ip, int(port), path
 
 class Response():
-    def __init__(self, socket, stream) -> None:
+    def __init__(self, socket, stream, num) -> None:
         self.socket = socket
         self.stream = stream
+        self.num = num
         # fieleds
         self.version = "" 
         self.status = ""  
@@ -64,9 +70,8 @@ class Response():
     def get_remain_body(self):
         content = self.socket.recv(BUFFER_SIZE)
         self.recv_length += len(content)
-        print("body length: ", self.body_length)
-        print("receive length: ", self.recv_length)
         if self.recv_length == self.body_length:
             self.complete = True
-            self.socket.close()
+            if self.num == 4:
+                self.socket.close()
         return content

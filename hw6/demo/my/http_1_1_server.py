@@ -1,4 +1,4 @@
-import socket, threading, os, time
+import socket, threading, os
 CHUNK_SIZE = 4096
 BUFFER_SIZE = 8192
 
@@ -67,9 +67,7 @@ class HTTPServer():
         # Create the server socket and start accepting connections.
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(self.server_addr)
-        self.server_socket.setblocking(0)
-        self.server_socket.listen(10)
-        
+        self.server_socket.listen(1)
         client_socket, client_addr = self.server_socket.accept()
         print(f"{client_addr} is connected.")
         client_socket.settimeout(5)
