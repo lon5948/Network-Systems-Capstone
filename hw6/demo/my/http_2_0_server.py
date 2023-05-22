@@ -1,62 +1,60 @@
-import socket, threading, os
+import socket, threading, os, struct
 CHUNK_SIZE = 4096
 BUFFER_SIZE = 8192
 
-def receive_data(client_socket, directory):
-    while True:
-        try:
-            request = client_socket.recv(BUFFER_SIZE)
-            if len(request) == 0:
-                client_socket.close()
-                print("Client is closed.")
+def send_response(request_frame, client_socket, directory):
+    header = request_frame[0:20]
+    request_length, types, flags, R, stream_id = struct.unpack("iiiii", header)
+    request = request_frame[20:20+request_length].decode().split(' ')
+    request_path = request[1]
+    if request_path == "/":
+        d_payload = "<html><header></header><body>"
+        files = os.listdir(directory)
+        for i in range(3):
+            d_payload += f"<a href='/static/{files[i]}'>{files[i]}</a>"
+            if i == 2:
                 break
-            request = request.decode().split(' ')
-            request_path = request[1]
-            if request_path == "/":
-                response_status = b"HTTP/1.0 200 OK\r\n"
-                response_content_type = b"Content-Type: text/html\r\n"
-                response_body = "<html><header></header><body>"
-                files = os.listdir(directory)
-                for i in range(3):
-                    response_body += f"<a href='/static/{files[i]}'>{files[i]}</a>"
-                    if i == 2:
-                        break
-                    response_body += "<br/>"
-                response_body += "</body></html>"
-                response_body = response_body.encode()
-                response_content_length = f"Content-Length: {len(response_body)}\r\n\r\n".encode()
-                response = response_status + response_content_type + response_content_length + response_body
-                client_socket.send(response)
-            elif request_path.startswith('/static'):
-                full_path = directory + request_path[7:]
-                file_size = os.path.getsize(full_path)
-                response_status = b"HTTP/1.0 200 OK\r\n"
-                response_content_type = b"Content-Type: text/plain\r\n"
-                with open(full_path, "rb") as file:
-                    flag = True
-                    while True:
-                        response_body = file.read(CHUNK_SIZE)
-                        if not response_body:
-                            break
-                        if flag:
-                            response_content_length = f"Content-Length: {file_size}\r\n\r\n".encode()
-                            response = response_status + response_content_type + response_content_length + response_body
-                            flag = False
-                        else:
-                            response = response_body
-                        client_socket.send(response)
-            else:
-                response_status = b"HTTP/1.0 404 Not Found\r\n"
-                response_content_type = b"Content-Type: text/html\r\n"
-                response_body = "<html><header> </header><body></body></html>".encode()
-                response_content_length = f"Content-Length: {len(response_body)}\r\n\r\n".encode()
-                response = response_status + response_content_type + response_content_length + response_body
-                client_socket.send(response)
-        except socket.timeout:
-            continue
-        except socket.error as e:
-            print('[SOCKET ERROR]', e)
-            break
+            d_payload += "<br/>"
+        d_payload += "</body></html>"
+        d_payload = d_payload.encode()
+        d_frame = struct.pack("iiiii", len(d_payload), 0, 1, 0, stream_id) + d_payload.encode()
+
+        h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{len(d_payload)}"
+        h_frame = struct.pack("iiiii", len(h_payload), 1, 1, 0, stream_id) + h_payload.encode()
+
+        client_socket.send(h_frame)
+        client_socket.send(d_frame)
+
+    elif request_path.startswith('/static'):
+        full_path = directory + request_path[7:]
+        file_size = os.path.getsize(full_path)
+
+        h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{file_size}"
+        h_frame = struct.pack("iiiii", len(h_payload), 1, 1, 0, stream_id) + h_payload.encode()
+        client_socket.send(h_frame)
+
+        with open(full_path, "rb") as file:
+            flag = True
+            complete = 0
+            while True:
+                if flag:
+                    d_payload = file.read(CHUNK_SIZE)
+                    flag = False
+                else:
+                    d_payload = d_payload_next
+                d_payload_next = file.read(CHUNK_SIZE)
+                if not d_payload_next:
+                    complete = 1
+                d_frame = struct.pack("iiiii", len(d_payload), 0, complete, 0, stream_id) + d_payload.encode()
+                client_socket.send(d_frame)
+    else:
+        d_payload = "<html><header></header><body></body></html>"
+        d_frame = struct.pack("iiiii", len(d_payload), 0, 1, 0, stream_id) + d_payload.encode()
+        h_payload = f"404 Not Found\r\nContent-Type:text/html\r\nContent-Length:{len(d_payload)}"
+        h_frame = struct.pack("iiiii", len(h_payload), 1, 1, 0, stream_id) + h_payload.encode()
+        client_socket.send(h_frame)
+        client_socket.send(d_frame)
+        
 
 class HTTPServer():
     def __init__(self, host="127.0.0.1", port=8080) -> None:
@@ -71,9 +69,20 @@ class HTTPServer():
         client_socket, client_addr = self.server_socket.accept()
         print(f"{client_addr} is connected.")
         client_socket.settimeout(5)
-        thread = threading.Thread(target=receive_data, args=(client_socket, self.directory, ))
-        thread.start()
-        thread.join()
+        while True:
+            try:
+                request_frame = client_socket.recv(BUFFER_SIZE)
+                if len(request_frame) == 0:
+                    client_socket.close()
+                    print("Client is closed.")
+                    break
+                thread = threading.Thread(target=send_response, args=(request_frame, client_socket, self.directory, ))
+                thread.start()
+            except socket.timeout:
+                continue
+            except socket.error as e:
+                print('[SOCKET ERROR]', e)
+                break
 
     def set_static(self, path):
         # Set the static directory so that when the client sends a GET request to the resource
