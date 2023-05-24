@@ -14,14 +14,15 @@ class HTTPClient(): # For HTTP/2
         request = f"GET {path} http {server_ip}:{server_port}"
         request_length = len(request)
         # payload length, type, flags, R, stream_id
-        header = struct.pack("BHBBBBBB", 0x00, request_length, 1, 1, 0x00, 0x00, 0x00, self.stream_id)
+        header = request_length.to_bytes(3, byteorder='big') + struct.pack("BBBBBB", 1, 1, 0x00, 0x00, 0x00, self.stream_id)
         h_frame = header + request.encode()
         self.client_socket.send(h_frame)
         response = Response(self.stream_id)
         self.stream_id += 2
         while response.complete == False:
             data = self.client_socket.recv(9)
-            _, length, types, flags, _, _, _, stream_id = struct.unpack("BHBBBBBB", data)
+            length = int.from_bytes(data[0:3], byteorder='big')
+            types, flags, _, _, _, stream_id = struct.unpack("BBBBBB", data)
             payload = b""
             while len(payload) != length:
                 payload += self.client_socket.recv(length-len(payload))
