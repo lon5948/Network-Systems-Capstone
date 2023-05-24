@@ -44,8 +44,6 @@ def send_response(request_frame, client_socket, directory):
                 if not d_payload_next:
                     complete = 1
                 d_frame = struct.pack("iiiii", len(d_payload), 0, complete, 0, stream_id) + d_payload
-                if len(d_payload) != 4096:
-                    print(len(d_payload))
                 client_socket.send(d_frame)
                 #print('send file frame')
     else:
