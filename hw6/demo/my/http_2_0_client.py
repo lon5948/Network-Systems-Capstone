@@ -24,7 +24,8 @@ class HTTPClient(): # For HTTP/2
             length, types, flags, R, stream_id = struct.unpack("iiiii", data)
             print(length, types, flags, R, stream_id)
             payload = self.client_socket.recv(length)
-            print(payload.decode())
+            if len(payload) != 4096:
+                print(payload.decode())
             if types == 0:
                 response.contents.append(payload)
                 if flags == 1:
