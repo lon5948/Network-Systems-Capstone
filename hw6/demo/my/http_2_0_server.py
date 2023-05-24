@@ -4,8 +4,8 @@ BUFFER_SIZE = 8192
 
 def send_response(request_frame, client_socket, directory):
     request_length = int.from_bytes(request_frame[0:3], byteorder='big')
-    types = int.from_bytes(request_frame[3], byteorder='big')
-    flags = int.from_bytes(request_frame[4], byteorder='big')
+    types = request_frame[3]
+    flags = request_frame[4]
     stream_id = int.from_bytes(request_frame[5:9], byteorder='big')
     request = request_frame[9:9+request_length].decode().split(' ')
     request_path = request[1]
