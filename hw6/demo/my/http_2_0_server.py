@@ -83,8 +83,8 @@ class HTTPServer():
             except socket.error as e:
                 print('[SOCKET ERROR]', e)
                 break
-        for i in range(4):
-            self.threads[i].join()
+        for th in self.threads:
+            th.join()
 
     def set_static(self, path):
         # Set the static directory so that when the client sends a GET request to the resource
