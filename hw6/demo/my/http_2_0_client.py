@@ -10,15 +10,13 @@ def get_response(response, path, server_ip, server_port, client_socket, stream_i
     h_frame = header + request.encode()
     client_socket.send(h_frame)
     print("h_frame send")
-    data = client_socket.recv(BUFFER_SIZE)
-    ind = 0
     for i in range(2):
-        length, types, flags, R, stream_id = struct.unpack("iiiii", data[ind:ind+20])
+        data = client_socket.recv(BUFFER_SIZE)
+        length, types, flags, R, stream_id = struct.unpack("iiiii", data[0:0+20])
         print(length, types, flags, R, stream_id)
         print(data[20:].decode())
-        payload = data[ind+20:ind+20+length].decode()
+        payload = data[20:20+length].decode()
         print(payload)
-        ind = ind + length
         if types == 0:
             print("receive data frame")
             response.content.append(payload)
