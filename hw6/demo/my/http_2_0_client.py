@@ -24,8 +24,8 @@ class HTTPClient(): # For HTTP/2
         while response.complete == False:
             data = self.client_socket.recv(BUFFER_SIZE)
             length, types, flags, R, stream_id = struct.unpack("iiiii", data[0:20])
-            print(length)
-            print(len(data))
+            print(length, types, flags, R, stream_id)
+            print("data length", len(data))
             payload = data[20:20+length].decode()
             if types == 0:
                 response.contents.append(payload.encode())
