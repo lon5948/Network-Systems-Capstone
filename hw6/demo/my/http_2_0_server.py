@@ -70,13 +70,12 @@ class HTTPServer():
         while True:
             try:
                 request_frame = self.client_socket.recv(BUFFER_SIZE)
-                print("receive request")
                 if len(request_frame) == 0:
+                    print("Finish")
                     break
                 thread = threading.Thread(target=send_response, args=(request_frame, self.client_socket, self.directory, ))
                 thread.start()
             except socket.timeout:
-                print("socket timeout")
                 continue
             except socket.error as e:
                 print('[SOCKET ERROR]', e)
