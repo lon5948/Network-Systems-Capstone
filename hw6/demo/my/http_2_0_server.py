@@ -58,6 +58,7 @@ class HTTPServer():
     def __init__(self, host="127.0.0.1", port=8080) -> None:
         self.server_addr = (host, port)
         self.server_socket = None
+        self.threads = []
         
     def run(self):
         # Create the server socket and start accepting connections.
@@ -74,12 +75,15 @@ class HTTPServer():
                     print("Finish")
                     break
                 thread = threading.Thread(target=send_response, args=(request_frame, self.client_socket, self.directory, ))
+                self.threads.append(thread)
                 thread.start()
             except socket.timeout:
                 continue
             except socket.error as e:
                 print('[SOCKET ERROR]', e)
                 break
+        for i in range(4):
+            self.threads[i].join()
 
     def set_static(self, path):
         # Set the static directory so that when the client sends a GET request to the resource
