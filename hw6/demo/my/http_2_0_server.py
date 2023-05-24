@@ -3,11 +3,11 @@ CHUNK_SIZE = 4096
 BUFFER_SIZE = 8192
 
 def send_response(request_frame, client_socket, directory):
-    header = request_frame[0:20]
+    header = request_frame[0:9]
     print(len(header))
     _, _, request_length, types, flags, _, _, _, stream_id = struct.unpack("BBBBBBBBB", header)
     
-    request = request_frame[20:20+request_length].decode().split(' ')
+    request = request_frame[9:9+request_length].decode().split(' ')
     request_path = request[1]
     if request_path == "/":
         d_payload = "<html><header></header><body>"
