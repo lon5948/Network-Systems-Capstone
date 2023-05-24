@@ -1,4 +1,4 @@
-import socket, time, struct
+import socket, time
 from collections import deque
 
 class HTTPClient(): # For HTTP/2
@@ -14,7 +14,7 @@ class HTTPClient(): # For HTTP/2
         request = f"GET {path} http {server_ip}:{server_port}"
         request_length = len(request)
         # payload length, type, flags, R, stream_id
-        header = request_length.to_bytes(3, byteorder='big') + struct.pack(">BBBBBB", 1, 1, 0x00, 0x00, 0x00, self.stream_id)
+        header = request_length.to_bytes(3, byteorder='big') + int(1).to_bytes(1, byteorder='big') + int(1).to_bytes(1, byteorder='big') + self.stream_id.to_bytes(4, byteorder='big')
         h_frame = header + request.encode()
         self.client_socket.send(h_frame)
         response = Response(self.stream_id)
@@ -22,7 +22,9 @@ class HTTPClient(): # For HTTP/2
         while response.complete == False:
             data = self.client_socket.recv(9)
             length = int.from_bytes(data[0:3], byteorder='big')
-            types, flags, _, _, _, stream_id = struct.unpack(">BBBBBB", data[3:9])
+            types = int.from_bytes(data[3], byteorder='big')
+            flags = int.from_bytes(data[4], byteorder='big')
+            stream_id = int.from_bytes(data[5:9], byteorder='big')
             payload = b""
             print(length)
             while len(payload) != length:
