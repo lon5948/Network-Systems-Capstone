@@ -22,7 +22,7 @@ class HTTPClient(): # For HTTP/2
         while response.complete == False:
             data = self.client_socket.recv(9)
             length = int.from_bytes(data[0:3], byteorder='big')
-            types, flags, _, _, _, stream_id = struct.unpack("BBBBBB", data)
+            types, flags, _, _, _, stream_id = struct.unpack("BBBBBB", data[3:9])
             payload = b""
             while len(payload) != length:
                 payload += self.client_socket.recv(length-len(payload))
