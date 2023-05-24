@@ -14,7 +14,7 @@ class HTTPClient(): # For HTTP/2
         request = f"GET {path} http {server_ip}:{server_port}"
         request_length = len(request)
         # payload length, type, flags, R, stream_id
-        header = request_length.to_bytes(3, byteorder='big') + int(1).to_bytes(1, byteorder='big') + int(1).to_bytes(1, byteorder='big') + self.stream_id.to_bytes(4, byteorder='big')
+        header = request_length.to_bytes(3, byteorder='big') + (1).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + self.stream_id.to_bytes(4, byteorder='big')
         h_frame = header + request.encode()
         self.client_socket.send(h_frame)
         response = Response(self.stream_id)
