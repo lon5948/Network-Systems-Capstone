@@ -26,7 +26,6 @@ class HTTPClient(): # For HTTP/2
             flags = data[4]
             stream_id = int.from_bytes(data[5:9], byteorder='big')
             payload = b""
-            print(length)
             while len(payload) != length:
                 payload += self.client_socket.recv(length-len(payload))
             if types == 0:
