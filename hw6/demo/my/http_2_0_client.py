@@ -19,11 +19,13 @@ class HTTPClient(): # For HTTP/2
         self.client_socket.send(h_frame)
         response = Response(self.stream_id)
         self.stream_id += 2
+        test = 0
         while response.complete == False:
             data = self.client_socket.recv(20)
             length, types, flags, R, stream_id = struct.unpack("iiiii", data)
             payload = self.client_socket.recv(length)
             if types == 0:
+                test += len(payload)
                 response.contents.append(payload)
                 if flags == 1:
                     response.complete = True
@@ -35,6 +37,7 @@ class HTTPClient(): # For HTTP/2
                     payload[1].split(':')[0].lower(): payload[1].split(':')[1],
                     payload[2].split(':')[0].lower(): payload[2].split(':')[1],
                 }
+        print(test)
         self.num += 1
         if self.num == 4:
             self.client_socket.close()
@@ -81,7 +84,7 @@ class Response():
     def get_stream_content(self): # used for handling long body
         begin_time = time.time()
         while len(self.contents) == 0: # contents is a buffer, busy waiting for new content
-            if self.complete or time.time()-begin_time > 5: # if response is complete or timeout
+            if self.complete or time.time() - begin_time > 5: # if response is complete or timeout
                 return None
         content = self.contents.popleft() # pop content from deque
         return content # the part content of the HTTP response body
