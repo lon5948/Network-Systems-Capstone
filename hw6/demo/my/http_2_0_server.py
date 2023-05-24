@@ -1,4 +1,4 @@
-import socket, threading, os, struct
+import socket, threading, os, struct, time
 CHUNK_SIZE = 4096
 BUFFER_SIZE = 8192
 
@@ -22,6 +22,7 @@ def send_response(request_frame, client_socket, directory):
         h_frame = struct.pack("iiiii", len(h_payload), 1, 1, 0, stream_id) + h_payload.encode()
 
         client_socket.send(h_frame)
+        time.sleep(1)
         client_socket.send(d_frame)
 
     elif request_path.startswith('/static'):
@@ -31,7 +32,7 @@ def send_response(request_frame, client_socket, directory):
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{file_size}"
         h_frame = struct.pack("iiiii", len(h_payload), 1, 1, 0, stream_id) + h_payload.encode()
         client_socket.send(h_frame)
-
+        time.sleep(1)
         with open(full_path, "rb") as file:
             flag = True
             complete = 0
@@ -52,6 +53,7 @@ def send_response(request_frame, client_socket, directory):
         h_payload = f"404 Not Found\r\nContent-Type:text/html\r\nContent-Length:{len(d_payload)}"
         h_frame = struct.pack("iiiii", len(h_payload), 1, 1, 0, stream_id) + h_payload.encode()
         client_socket.send(h_frame)
+        time.sleep(1)
         client_socket.send(d_frame)
         
 
