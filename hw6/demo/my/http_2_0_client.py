@@ -14,11 +14,11 @@ def get_response(response, path, server_ip, server_port, client_socket, stream_i
         data = client_socket.recv(BUFFER_SIZE)
         length, types, flags, R, stream_id = struct.unpack("iiiii", data[0:20])
         print(length, types, flags, R, stream_id)
-        payload = data[20:20+length]
-        print(payload.decode())
+        payload = data[20:20+length].decode()
+        print(payload)
         if types == 0:
             print("receive data frame")
-            response.content.append(payload)
+            response.content.append(payload.encode())
             if flags == 1:
                 response.complete = True
         elif types == 1:
