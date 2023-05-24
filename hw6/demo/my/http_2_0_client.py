@@ -38,6 +38,7 @@ class HTTPClient(): # For HTTP/2
         self.num += 1
         if self.num == 4:
             self.client_socket.close()
+        print(self.stream_id, " return")
         return response
     
     def parse_url(self, url):
