@@ -13,18 +13,18 @@ def get_response(response, path, server_ip, server_port, client_socket, stream_i
     data = client_socket.recv(BUFFER_SIZE)
     ind = 0
     for i in range(2):
-        length, types, flags, R, stream_id = struct.unpack("iiiii", data[ind:20])
+        length, types, flags, R, stream_id = struct.unpack("iiiii", data[ind:ind+20])
+        print(length, types, flags, R, stream_id)
         payload = data[ind:ind+length].decode()
+        print(payload)
         ind = ind + length
         if types == 0:
             print("receive data frame")
-            print(payload)
             response.content.append(payload)
             if flags == 1:
                 response.complete = True
         elif types == 1:
             print("receive header frame")
-            print(payload)
             payload = payload.split('\r\n')
             response.status = payload[0]
             response.headers = {
