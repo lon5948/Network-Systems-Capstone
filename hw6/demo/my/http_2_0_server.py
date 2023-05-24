@@ -32,13 +32,20 @@ def send_response(request_frame, client_socket, directory):
         h_frame = struct.pack("iiiii", len(h_payload), 1, 1, 0, stream_id) + h_payload.encode()
         client_socket.send(h_frame)
         with open(full_path, "rb") as file:
+            flag = True
             complete = 0
             while complete == 0:
-                d_payload = file.read(CHUNK_SIZE)
-                if len(d_payload) < CHUNK_SIZE:
+                if flag:
+                    d_payload = file.read(CHUNK_SIZE)
+                    flag = False
+                else:
+                    d_payload = d_payload_next
+                d_payload_next = file.read(CHUNK_SIZE)
+                if not d_payload_next:
                     complete = 1
                 d_frame = struct.pack("iiiii", len(d_payload), 0, complete, 0, stream_id) + d_payload
                 client_socket.send(d_frame)
+                time.sleep(0.1)
     else:
         d_payload = "<html><header></header><body></body></html>"
         d_frame = struct.pack("iiiii", len(d_payload), 0, 1, 0, stream_id) + d_payload.encode()
