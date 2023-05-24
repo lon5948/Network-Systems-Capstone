@@ -20,7 +20,6 @@ def write_file_from_response(file_path, response):
         
 if __name__ == '__main__':
     client = http_2_0_client.HTTPClient()
-
     target_path = "../../target"
     response = client.get(url=f"127.0.0.1:8080/")
     file_list = []

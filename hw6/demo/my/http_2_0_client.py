@@ -9,9 +9,10 @@ def get_response(response, path, server_ip, server_port, client_socket, stream_i
     header = struct.pack("iiiii", request_length, 1, 1, 0, stream_id)
     h_frame = header + request.encode()
     client_socket.send(h_frame)
-
+    print("h_frame send")
     for i in range(2):
         data = client_socket.recv(BUFFER_SIZE)
+        print("receive frame")
         length, types, flags, R, stream_id = struct.unpack("iiiii", data[0:20])
         payload = data[20:20+length].decode()
         if types == 0:
@@ -40,7 +41,6 @@ class HTTPClient(): # For HTTP/2
         thread = threading.Thread(target=get_response, args=(response, path, server_ip, server_port, self.client_socket, self.stream_id, ))
         thread.start()
         self.stream_id += 2
-        thread.join()
         self.num += 1
         if self.num == 4:
             self.client_socket.close()

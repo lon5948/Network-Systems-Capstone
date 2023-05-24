@@ -16,7 +16,6 @@ def send_response(request_frame, client_socket, directory):
                 break
             d_payload += "<br/>"
         d_payload += "</body></html>"
-        d_payload = d_payload.encode()
         d_frame = struct.pack("iiiii", len(d_payload), 0, 1, 0, stream_id) + d_payload.encode()
 
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{len(d_payload)}"
@@ -72,6 +71,7 @@ class HTTPServer():
         while True:
             try:
                 request_frame = client_socket.recv(BUFFER_SIZE)
+                print("receive request")
                 if len(request_frame) == 0:
                     client_socket.close()
                     print("Client is closed.")
@@ -79,6 +79,7 @@ class HTTPServer():
                 thread = threading.Thread(target=send_response, args=(request_frame, client_socket, self.directory, ))
                 thread.start()
             except socket.timeout:
+                print("socket timeout")
                 continue
             except socket.error as e:
                 print('[SOCKET ERROR]', e)
