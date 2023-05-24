@@ -12,8 +12,6 @@ class HTTPClient(): # For HTTP/2
         server_ip, server_port, path = self.parse_url(url)
         if path == '/':
             self.client_socket.connect((server_ip, server_port))
-        response = Response(self.stream_id)
-
         request = f"GET {path} http {server_ip}:{server_port}"
         request_length = len(request)
         # payload length, type, flags, R, stream_id
@@ -21,9 +19,13 @@ class HTTPClient(): # For HTTP/2
         h_frame = header + request.encode()
         self.client_socket.send(h_frame)
         self.stream_id += 2
+
+        response = Response(self.stream_id)
         while response.complete == False:
             data = self.client_socket.recv(BUFFER_SIZE)
             length, types, flags, R, stream_id = struct.unpack("iiiii", data[0:20])
+            print(length)
+            print(len(data))
             payload = data[20:20+length].decode()
             if types == 0:
                 response.contents.append(payload.encode())
