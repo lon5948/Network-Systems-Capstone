@@ -24,14 +24,13 @@ class HTTPClient(): # For HTTP/2
             length, types, flags, R, stream_id = struct.unpack("iiiii", data)
             print(length, types, flags, R, stream_id)
             payload = self.client_socket.recv(length)
-            if len(payload) != 4096:
-                print(payload.decode())
             if types == 0:
                 response.contents.append(payload)
                 if flags == 1:
                     response.complete = True
             elif types == 1:
                 payload = payload.decode()
+                print(payload)
                 payload = payload.split('\r\n')
                 response.status = payload[0]
                 response.headers = {
