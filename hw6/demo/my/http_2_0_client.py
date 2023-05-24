@@ -2,29 +2,6 @@ import socket, time, struct, threading
 from collections import deque
 BUFFER_SIZE = 8192
 
-def get_response(response, path, server_ip, server_port, client_socket, stream_id):
-    request = f"GET {path} http {server_ip}:{server_port}"
-    request_length = len(request)
-    # payload length, type, flags, R, stream_id
-    header = struct.pack("iiiii", request_length, 1, 1, 0, stream_id)
-    h_frame = header + request.encode()
-    client_socket.send(h_frame)
-    while response.complete == False:
-        data = client_socket.recv(BUFFER_SIZE)
-        length, types, flags, R, stream_id = struct.unpack("iiiii", data[0:20])
-        payload = data[20:20+length].decode()
-        if types == 0:
-            response.contents.append(payload.encode())
-            if flags == 1:
-                response.complete = True
-        elif types == 1:
-            payload = payload.split('\r\n')
-            response.status = payload[0]
-            response.headers = {
-                payload[1].split(':')[0].lower(): payload[1].split(':')[1],
-                payload[2].split(':')[0].lower(): payload[2].split(':')[1],
-            }
-
 class HTTPClient(): # For HTTP/2
     def __init__(self) -> None:
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -36,9 +13,29 @@ class HTTPClient(): # For HTTP/2
         if path == '/':
             self.client_socket.connect((server_ip, server_port))
         response = Response(self.stream_id)
-        thread = threading.Thread(target=get_response, args=(response, path, server_ip, server_port, self.client_socket, self.stream_id, ))
-        thread.start()
+
+        request = f"GET {path} http {server_ip}:{server_port}"
+        request_length = len(request)
+        # payload length, type, flags, R, stream_id
+        header = struct.pack("iiiii", request_length, 1, 1, 0, self.stream_id)
+        h_frame = header + request.encode()
+        self.client_socket.send(h_frame)
         self.stream_id += 2
+        while response.complete == False:
+            data = self.client_socket.recv(BUFFER_SIZE)
+            length, types, flags, R, stream_id = struct.unpack("iiiii", data[0:20])
+            payload = data[20:20+length].decode()
+            if types == 0:
+                response.contents.append(payload.encode())
+                if flags == 1:
+                    response.complete = True
+            elif types == 1:
+                payload = payload.split('\r\n')
+                response.status = payload[0]
+                response.headers = {
+                    payload[1].split(':')[0].lower(): payload[1].split(':')[1],
+                    payload[2].split(':')[0].lower(): payload[2].split(':')[1],
+                }
         self.num += 1
         if self.num == 4:
             self.client_socket.close()
