@@ -4,7 +4,6 @@ BUFFER_SIZE = 8192
 
 def send_response(request_frame, client_socket, directory):
     header = request_frame[0:9]
-    print(len(header))
     _, _, request_length, types, flags, _, _, _, stream_id = struct.unpack("BBBBBBBBB", header)
     
     request = request_frame[9:9+request_length].decode().split(' ')
@@ -18,10 +17,10 @@ def send_response(request_frame, client_socket, directory):
                 break
             d_payload += "<br/>"
         d_payload += "</body></html>"
-        d_frame = struct.pack("BBBBBBBBB", 0x00, 0x00, len(d_payload), 0, 1, 0x00, 0x00, 0x00, stream_id) + d_payload.encode()
+        d_frame = struct.pack("BHBBBBBB", 0x00, len(d_payload), 0, 1, 0x00, 0x00, 0x00, stream_id) + d_payload.encode()
 
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{len(d_payload)}"
-        h_frame = struct.pack("BBBBBBBBB", 0x00, 0x00, len(h_payload), 1, 1, 0x00, 0x00, 0x00, stream_id) + h_payload.encode()
+        h_frame = struct.pack("BHBBBBBB", 0x00, len(h_payload), 1, 1, 0x00, 0x00, 0x00, stream_id) + h_payload.encode()
 
         client_socket.send(h_frame)
         client_socket.send(d_frame)
@@ -31,7 +30,7 @@ def send_response(request_frame, client_socket, directory):
         file_size = os.path.getsize(full_path)
 
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{file_size}"
-        h_frame = struct.pack("BBBBBBBBB", 0x00, 0x00, len(h_payload), 1, 1, 0x00, 0x00, 0x00, stream_id) + h_payload.encode()
+        h_frame = struct.pack("BHBBBBBB", 0x00, len(h_payload), 1, 1, 0x00, 0x00, 0x00, stream_id) + h_payload.encode()
         client_socket.send(h_frame)
         with open(full_path, "rb") as file:
             flag = True
@@ -45,13 +44,13 @@ def send_response(request_frame, client_socket, directory):
                 d_payload_next = file.read(CHUNK_SIZE)
                 if not d_payload_next:
                     complete = 1
-                d_frame = struct.pack("BBBBBBBBB", 0x00, 0x00, len(d_payload), 0, complete, 0x00, 0x00, 0x00, stream_id) + d_payload
+                d_frame = struct.pack("BHBBBBBB", 0x00, len(d_payload), 0, complete, 0x00, 0x00, 0x00, stream_id) + d_payload
                 client_socket.send(d_frame)
     else:
         d_payload = "<html><header></header><body></body></html>"
-        d_frame = struct.pack("BBBBBBBBB", 0x00, 0x00, len(d_payload), 0, 1, 0x00, 0x00, 0x00, stream_id) + d_payload.encode()
+        d_frame = struct.pack("BHBBBBBB", 0x00, len(d_payload), 0, 1, 0x00, 0x00, 0x00, stream_id) + d_payload.encode()
         h_payload = f"404 Not Found\r\nContent-Type:text/html\r\nContent-Length:{len(d_payload)}"
-        h_frame = struct.pack("BBBBBBBBB", 0x00, 0x00, len(h_payload), 1, 1, 0x00, 0x00, 0x00, stream_id) + h_payload.encode()
+        h_frame = struct.pack("BHBBBBBB", 0x00, len(h_payload), 1, 1, 0x00, 0x00, 0x00, stream_id) + h_payload.encode()
         client_socket.send(h_frame)
         client_socket.send(d_frame)
         
