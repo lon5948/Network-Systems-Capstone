@@ -32,6 +32,7 @@ class HTTPClient(): # For HTTP/2
                     response.complete = True
             elif types == 1:
                 payload = payload.decode()
+                print(payload)
                 payload = payload.split('\r\n')
                 response.status = payload[0]
                 response.headers = {
