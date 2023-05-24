@@ -18,10 +18,10 @@ def send_response(request_frame, client_socket, directory):
                 break
             d_payload += "<br/>"
         d_payload += "</body></html>"
-        d_frame = request_length.to_bytes(3, byteorder='big') + (0).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + d_payload.encode()
+        d_frame = len(d_payload).to_bytes(3, byteorder='big') + (0).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + d_payload.encode()
 
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{len(d_payload)}"
-        h_frame = request_length.to_bytes(3, byteorder='big') + (1).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + h_payload.encode()
+        h_frame = len(h_payload).to_bytes(3, byteorder='big') + (1).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + h_payload.encode()
 
         client_socket.send(h_frame)
         client_socket.send(d_frame)
@@ -31,7 +31,7 @@ def send_response(request_frame, client_socket, directory):
         file_size = os.path.getsize(full_path)
 
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{file_size}"
-        h_frame = request_length.to_bytes(3, byteorder='big') + (1).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + h_payload.encode()
+        h_frame = len(h_payload).to_bytes(3, byteorder='big') + (1).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + h_payload.encode()
         client_socket.send(h_frame)
         with open(full_path, "rb") as file:
             flag = True
@@ -45,13 +45,13 @@ def send_response(request_frame, client_socket, directory):
                 d_payload_next = file.read(CHUNK_SIZE)
                 if not d_payload_next:
                     complete = 1
-                d_frame = request_length.to_bytes(3, byteorder='big') + (0).to_bytes(1, byteorder='big') + complete.to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + d_payload
+                d_frame = len(d_payload).to_bytes(3, byteorder='big') + (0).to_bytes(1, byteorder='big') + complete.to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + d_payload
                 client_socket.send(d_frame)
     else:
         d_payload = "<html><header></header><body></body></html>"
-        d_frame = request_length.to_bytes(3, byteorder='big') + (0).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + d_payload.encode()
+        d_frame = len(d_payload).to_bytes(3, byteorder='big') + (0).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + d_payload.encode()
         h_payload = f"404 Not Found\r\nContent-Type:text/html\r\nContent-Length:{len(d_payload)}"
-        h_frame = request_length.to_bytes(3, byteorder='big') + (1).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + h_payload.encode()
+        h_frame = len(h_payload).to_bytes(3, byteorder='big') + (1).to_bytes(1, byteorder='big') + (1).to_bytes(1, byteorder='big') + stream_id.to_bytes(4, byteorder='big') + h_payload.encode()
         client_socket.send(h_frame)
         client_socket.send(d_frame)
         
