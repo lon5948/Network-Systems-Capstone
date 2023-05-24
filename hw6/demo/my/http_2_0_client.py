@@ -19,15 +19,11 @@ class HTTPClient(): # For HTTP/2
         self.client_socket.send(h_frame)
         response = Response(self.stream_id)
         self.stream_id += 2
-        test = 0
-        test2 = 0
         while response.complete == False:
             data = self.client_socket.recv(20)
             length, types, flags, R, stream_id = struct.unpack("iiiii", data)
             payload = self.client_socket.recv(length)
             if types == 0:
-                test += len(payload)
-                test2 += length
                 response.contents.append(payload)
                 if flags == 1:
                     response.complete = True
@@ -39,8 +35,8 @@ class HTTPClient(): # For HTTP/2
                     payload[1].split(':')[0].lower(): payload[1].split(':')[1],
                     payload[2].split(':')[0].lower(): payload[2].split(':')[1],
                 }
-        print(test)
-        print(test2)
+            else:
+                print(types)
         self.num += 1
         if self.num == 4:
             self.client_socket.close()
