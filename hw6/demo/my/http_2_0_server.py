@@ -4,8 +4,9 @@ BUFFER_SIZE = 8192
 
 def send_response(request_frame, client_socket, directory):
     header = request_frame[0:20]
-    _, _, request_length, types, flags, _, _, _, stream_id = struct.unpack("BBBBBBBBB", header)
     print(len(header))
+    _, _, request_length, types, flags, _, _, _, stream_id = struct.unpack("BBBBBBBBB", header)
+    
     request = request_frame[20:20+request_length].decode().split(' ')
     request_path = request[1]
     if request_path == "/":
