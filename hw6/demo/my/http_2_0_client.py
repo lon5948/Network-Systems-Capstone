@@ -19,7 +19,6 @@ class HTTPClient(): # For HTTP/2
         self.client_socket.send(h_frame)
         response = Response(self.stream_id)
         self.stream_id += 2
-        print("start")
         while response.complete == False:
             data = self.client_socket.recv(20)
             length, types, flags, R, stream_id = struct.unpack("iiiii", data)
@@ -39,8 +38,6 @@ class HTTPClient(): # For HTTP/2
         self.num += 1
         if self.num == 4:
             self.client_socket.close()
-        print("return")
-        print("--------------------------------")
         return response
     
     def parse_url(self, url):
