@@ -23,7 +23,6 @@ class HTTPClient(): # For HTTP/2
             data = self.client_socket.recv(20)
             length, types, flags, R, stream_id = struct.unpack("iiiii", data)
             payload = self.client_socket.recv(length)
-            time.sleep(1)
             if types == 0:
                 response.contents.append(payload)
                 if flags == 1:
