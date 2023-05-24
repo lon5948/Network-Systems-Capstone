@@ -31,8 +31,6 @@ def send_response(request_frame, client_socket, directory):
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{file_size}"
         h_frame = struct.pack("iiiii", len(h_payload), 1, 1, 0, stream_id) + h_payload.encode()
         client_socket.send(h_frame)
-        print(file_size)
-        test = 0
         with open(full_path, "rb") as file:
             flag = True
             complete = 0
@@ -47,9 +45,7 @@ def send_response(request_frame, client_socket, directory):
                     complete = 1
                 d_frame = struct.pack("iiiii", len(d_payload), 0, complete, 0, stream_id) + d_payload
                 client_socket.send(d_frame)
-                test += len(d_payload)
-                #print('send file frame')
-        print(test)
+                print('send file frame')
     else:
         d_payload = "<html><header></header><body></body></html>"
         d_frame = struct.pack("iiiii", len(d_payload), 0, 1, 0, stream_id) + d_payload.encode()
