@@ -24,6 +24,7 @@ class HTTPClient(): # For HTTP/2
         while response.complete == False:
             data = self.client_socket.recv(20)
             length, types, flags, R, stream_id = struct.unpack("iiiii", data)
+            time.sleep(1)
             payload = self.client_socket.recv(length)
             if types == 0:
                 test += len(payload)
