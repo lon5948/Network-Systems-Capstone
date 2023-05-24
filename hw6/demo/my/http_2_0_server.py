@@ -45,7 +45,6 @@ def send_response(request_frame, client_socket, directory):
                     complete = 1
                 d_frame = struct.pack("iiiii", len(d_payload), 0, complete, 0, stream_id) + d_payload
                 client_socket.send(d_frame)
-                #print('send file frame')
     else:
         d_payload = "<html><header></header><body></body></html>"
         d_frame = struct.pack("iiiii", len(d_payload), 0, 1, 0, stream_id) + d_payload.encode()
