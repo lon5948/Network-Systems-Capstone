@@ -1,6 +1,5 @@
-import socket, time, struct, threading
+import socket, time, struct
 from collections import deque
-BUFFER_SIZE = 8192
 
 class HTTPClient(): # For HTTP/2
     def __init__(self) -> None:
@@ -21,14 +20,17 @@ class HTTPClient(): # For HTTP/2
         response = Response(self.stream_id)
         self.stream_id += 2
         while response.complete == False:
-            data = self.client_socket.recv(BUFFER_SIZE)
-            length, types, flags, R, stream_id = struct.unpack("iiiii", data[0:20])
-            payload = data[20:20+length].decode()
+            data = self.client_socket.recv(20)
+            length, types, flags, R, stream_id = struct.unpack("iiiii", data)
+            print(length, types, flags, R, stream_id)
+            payload = self.client_socket.recv(length)
+            print(payload.decode())
             if types == 0:
-                response.contents.append(payload.encode())
+                response.contents.append(payload)
                 if flags == 1:
                     response.complete = True
             elif types == 1:
+                payload = payload.decode()
                 payload = payload.split('\r\n')
                 response.status = payload[0]
                 response.headers = {
