@@ -67,18 +67,16 @@ class HTTPServer():
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind(self.server_addr)
         self.server_socket.listen(1)
-        client_socket, client_addr = self.server_socket.accept()
+        self.client_socket, client_addr = self.server_socket.accept()
         print(f"{client_addr} is connected.")
-        client_socket.settimeout(5)
+        self.client_socket.settimeout(5)
         while True:
             try:
-                request_frame = client_socket.recv(BUFFER_SIZE)
+                request_frame = self.client_socket.recv(BUFFER_SIZE)
                 print("receive request")
                 if len(request_frame) == 0:
-                    client_socket.close()
-                    print("Client is closed.")
                     break
-                thread = threading.Thread(target=send_response, args=(request_frame, client_socket, self.directory, ))
+                thread = threading.Thread(target=send_response, args=(request_frame, self.client_socket, self.directory, ))
                 thread.start()
             except socket.timeout:
                 print("socket timeout")
@@ -95,3 +93,4 @@ class HTTPServer():
     def close(self):
         # Close the server socket.
         self.server_socket.close()
+        self.client_socket.close()
