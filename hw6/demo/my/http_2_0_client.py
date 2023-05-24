@@ -15,6 +15,7 @@ def get_response(response, path, server_ip, server_port, client_socket, stream_i
     for i in range(2):
         length, types, flags, R, stream_id = struct.unpack("iiiii", data[ind:ind+20])
         print(length, types, flags, R, stream_id)
+        print(data[20:].decode())
         payload = data[ind+20:ind+20+length].decode()
         print(payload)
         ind = ind + length
