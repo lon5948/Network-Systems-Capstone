@@ -81,8 +81,7 @@ class Response():
     def get_stream_content(self): # used for handling long body
         begin_time = time.time()
         while len(self.contents) == 0: # contents is a buffer, busy waiting for new content
-          if self.complete or time.time()-begin_time > 5: # if response is complete or timeout
-              return None
-        time.sleep(0.5)
+            if self.complete or time.time()-begin_time > 5: # if response is complete or timeout
+                return None
         content = self.contents.popleft() # pop content from deque
         return content # the part content of the HTTP response body
