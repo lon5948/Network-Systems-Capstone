@@ -36,7 +36,7 @@ def send_response(request_frame, client_socket, directory):
         with open(full_path, "rb") as file:
             flag = True
             complete = 0
-            while True:
+            while complete == 0:
                 if flag:
                     d_payload = file.read(CHUNK_SIZE)
                     flag = False
