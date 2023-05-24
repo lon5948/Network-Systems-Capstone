@@ -8,6 +8,7 @@ def send_response(request_frame, client_socket, directory):
     types, flags, _, _, _, stream_id = struct.unpack("BBBBBB", header)
     
     request = request_frame[9:9+request_length].decode().split(' ')
+    
     request_path = request[1]
     if request_path == "/":
         d_payload = "<html><header></header><body>"
