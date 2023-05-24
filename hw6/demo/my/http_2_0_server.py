@@ -45,9 +45,9 @@ def send_response(request_frame, client_socket, directory):
                 d_payload_next = file.read(CHUNK_SIZE)
                 if not d_payload_next:
                     complete = 1
-                print(len(d_payload))
                 d_frame = struct.pack("iiiii", len(d_payload), 0, complete, 0, stream_id) + d_payload
                 client_socket.send(d_frame)
+                time.sleep(1)
     else:
         d_payload = "<html><header></header><body></body></html>"
         d_frame = struct.pack("iiiii", len(d_payload), 0, 1, 0, stream_id) + d_payload.encode()

@@ -18,9 +18,8 @@ class HTTPClient(): # For HTTP/2
         header = struct.pack("iiiii", request_length, 1, 1, 0, self.stream_id)
         h_frame = header + request.encode()
         self.client_socket.send(h_frame)
-        self.stream_id += 2
-
         response = Response(self.stream_id)
+        self.stream_id += 2
         while response.complete == False:
             data = self.client_socket.recv(BUFFER_SIZE)
             length, types, flags, R, stream_id = struct.unpack("iiiii", data[0:20])
