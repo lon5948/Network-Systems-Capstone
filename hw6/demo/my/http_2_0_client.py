@@ -36,7 +36,7 @@ class HTTPClient(): # For HTTP/2
                     payload[2].split(':')[0].lower(): payload[2].split(':')[1],
                 }
             else:
-                print(types)
+                print(length, types, flags, R, stream_id)
         self.num += 1
         if self.num == 4:
             self.client_socket.close()
