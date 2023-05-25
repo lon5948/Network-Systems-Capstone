@@ -1,52 +1,52 @@
 import time, threading
 from collections import deque
-from my.QUIC.quic_client import QUICClient 
+from QUIC.quic_client import QUICClient 
 
 def recv_response(client):
     print("enter thread")
-    br = True
-    while br:
-        br = False
-        print("start")
-        for s, resp in client.responses.items():
-            print(s, len(resp.contents))
-            if resp.complete == False:
-                br = True
-                break
-        if len(client.responses) == 4 and br == False:
-            break
-        else:
-            br = True
+    remain_lens = {1: -1, 3: -1, 5: -1, 7: -1}
+    stop = {1: False, 3: False, 5: False, 7: False}
+    while True:
         time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
-        try:
+        if flags:
+            stop[sid]
+            client.responses[sid].complete = True
+        if remain_lens[sid] == -1:
+            types = data[0]
+            length = int.from_bytes(data[1:5], byteorder='big')
+            remain_lens[sid] = 0
+            payload = data[5:]
+            payload = payload.decode()
+            payload = payload.split('\r\n')
+            client.responses[sid].status = payload[0]
+            client.responses[sid].headers = {
+                payload[1].split(':')[0].lower(): payload[1].split(':')[1],
+                payload[2].split(':')[0].lower(): payload[2].split(':')[1],
+            }
+        elif remain_lens[sid] == 0:
             types = data[0]
             length = int.from_bytes(data[1:5], byteorder='big')
             payload = data[5:]
-            print(data[:5])
-            if types == 0:
-                client.responses[sid].contents.append(payload)
-                client.responses[sid].complete = flags
-                #print("complete: ", flags)
-                client.test[sid] += len(payload)
-                #print(sid, "total length: ", client.test[sid])
-            elif types == 1:
-                #print("header", len(payload), length)
-                #print("get header frame")
-                payload = payload.decode()
-                #print(payload)
-                payload = payload.split('\r\n')
-                client.responses[sid].status = payload[0]
-                client.responses[sid].headers = {
-                    payload[1].split(':')[0].lower(): payload[1].split(':')[1],
-                    payload[2].split(':')[0].lower(): payload[2].split(':')[1],
-                }
-        except ValueError:
-            d = data.decode()
-            client.responses[sid].contents.append(data)
-            client.responses[sid].complete = flags
-            client.test[sid] += len(payload)
-            #print(sid, "total length: ", client.test[sid])
+            remain_lens[sid] = length - len(payload)
+            client.responses[sid].contents.append(payload)
+        elif len(data) <= remain_lens[sid]:
+            payload = data
+            remain_lens[sid] -= len(payload)
+            client.responses[sid].contents.append(payload)
+        else:
+            client.responses[sid].contents.append(data[:remain_lens[sid]])
+            d = data[remain_lens[sid]:]
+            remain_lens[sid] = 0
+            types = data[0]
+            length = int.from_bytes(data[1:5], byteorder='big')
+            payload = d[5:]
+            remain_lens[sid] = length - len(payload)
+            client.responses[sid].contents.append(payload)
+            #print("header", len(payload), length)
+            #print("get header frame")
+        if(all(st for _, st in stop.items())):
+            break
     print("break thread")
         
 
@@ -56,8 +56,7 @@ class HTTPClient(): # For HTTP/3
         self.num = 0
         self.stream_id = 1
         self.responses = {}
-        self.test = {1: 0, 3: 0, 5: 0, 7: 0}
-        for i in self.test.keys():
+        for i in range(1, 9, 2):
             self.responses[i] = Response(i)
         self.thread = threading.Thread(target=recv_response, args=(self,))
         self.thread.start()
@@ -74,9 +73,9 @@ class HTTPClient(): # For HTTP/3
         # response = Response(self.stream_id)
         #self.responses[self.stream_id] = response
         print(self.stream_id)
+        s = self.stream_id
         self.stream_id += 2
-        print("return response")
-        return self.responses[self.stream_id-2]
+        return self.responses[s]
     
     def parse_url(self, url):
         if url.startswith("http://"):
@@ -111,7 +110,6 @@ class Response():
         return self.body # the full content of HTTP response body
     
     def get_stream_content(self): # used for handling long body
-        
         while not self.complete and len(self.contents) == 0:
             time.sleep(0.01)
         if len(self.contents) == 0: # contents is a buffer, busy waiting for new content
