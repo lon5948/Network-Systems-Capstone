@@ -31,8 +31,8 @@ class HTTPClient(): # For HTTP/3
                 sid, d, fl = self.quic_client.recv()
                 payload += d
             if types == 0:
-                #test += len(payload)
-                #print("get data frame", test)
+                test += len(payload)
+                print("get data frame", test)
                 response.contents.append(payload)
                 if flags == True:
                     response.complete = True
