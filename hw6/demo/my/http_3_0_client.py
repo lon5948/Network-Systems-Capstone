@@ -2,16 +2,13 @@ import time, threading
 from collections import deque
 from my.QUIC.quic_client import QUICClient 
 
-def recv_response(client, stream_id, path, server_ip, server_port):
-    request = f"GET {path} http {server_ip}:{server_port}"
-    request_length = len(request)
-    header = (1).to_bytes(1, byteorder='big') + request_length.to_bytes(4, byteorder='big')
-    h_frame = header + request.encode()
-    client.quic_client.send(stream_id, h_frame, end=True)
-    while client.responses[stream_id].complete == False:
+def recv_response(client):
+    br = True
+    while br:
+        br = False
         time.sleep(0.2)
         sid, data, flags = client.quic_client.recv()
-        if sid != 1 and len(client.responses[sid].contents) > 0 and len(client.responses[sid].contents[-1]) < 4096:
+        if flags == False and len(client.responses[sid].contents) > 0 and len(client.responses[sid].contents[-1]) < 4096:
             client.responses[sid].contents[-1] += data
             client.responses[sid].complete = flags
             client.test[sid] += len(data)
@@ -38,26 +35,34 @@ def recv_response(client, stream_id, path, server_ip, server_port):
                 payload[2].split(':')[0].lower(): payload[2].split(':')[1],
             }
 
+        for _, resp in client.responses:
+            if resp.complete == False:
+                br = True
+                break
+
 class HTTPClient(): # For HTTP/3
     def __init__(self) -> None:
         self.quic_client = QUICClient()
         self.num = 0
         self.stream_id = 1
-        self.threads = []
         self.responses = {}
         self.test = {1: 0, 3: 0, 5: 0, 7: 0}
+        self.thread = threading.Thread(target=recv_response, args=(self,))
+        self.thread.start()
 
     def get(self, url, headers=None):
         server_ip, server_port, path = self.parse_url(url)
         if path == '/':
             self.quic_client.connect((server_ip, server_port))
+        request = f"GET {path} http {server_ip}:{server_port}"
+        request_length = len(request)
+        header = (1).to_bytes(1, byteorder='big') + request_length.to_bytes(4, byteorder='big')
+        h_frame = header + request.encode()
+        self.quic_client.quic_client.send(self.stream_id, h_frame, end=True)
         response = Response(self.stream_id)
         self.responses[self.stream_id] = response
         print(self.stream_id)
-        thread = threading.Thread(target=recv_response, args=(self, self.stream_id, path, server_ip, server_port))
         self.stream_id += 2
-        self.threads.append(thread) 
-        thread.start()
         return response
     
     def parse_url(self, url):
