@@ -22,6 +22,7 @@ class HTTPClient(): # For HTTP/3
         self.stream_id += 2
         test = 0
         while response.complete == False:
+            print("-------wait to receive data---------")
             stream_id, data, flags = self.quic_client.recv()
             #print(data)
             types = data[0]
@@ -30,7 +31,7 @@ class HTTPClient(): # For HTTP/3
             if types == 0:
                 print("data: ", len(payload), length)
                 while len(payload) < length:
-                    #time.sleep(0.2)
+                    time.sleep(0.2)
                     sid, d, flags = self.quic_client.recv()
                     payload += d
                     print("again: ", len(payload), length)
@@ -39,7 +40,7 @@ class HTTPClient(): # For HTTP/3
                 response.complete = flags
                 print("complete: ", flags)
                 test += len(payload)
-                print("---------------total length----------------------", test)
+                print("total length: ", test)
             elif types == 1:
                 print("header", len(payload), length)
                 #print("get header frame")
@@ -51,7 +52,6 @@ class HTTPClient(): # For HTTP/3
                     payload[1].split(':')[0].lower(): payload[1].split(':')[1],
                     payload[2].split(':')[0].lower(): payload[2].split(':')[1],
                 }
-
         self.num += 1
         if self.num == 4:
             self.quic_client.close()
