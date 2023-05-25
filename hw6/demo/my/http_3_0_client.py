@@ -47,8 +47,7 @@ class HTTPClient(): # For HTTP/3
                     payload[2].split(':')[0].lower(): payload[2].split(':')[1],
                 }
             else:
-                #print("type: ", types)
-                pass
+                print("type: ", types)
         self.num += 1
         if self.num == 4:
             self.quic_client.close()
