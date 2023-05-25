@@ -3,7 +3,7 @@ from collections import deque
 from my.QUIC.quic_client import QUICClient 
 
 def recv_response(quic_client, responses, path, server_ip, server_port, stream_id):
-    test = 0
+    test = {1: 0, 3: 0, 5: 0, 7: 0}
     request = f"GET {path} http {server_ip}:{server_port}"
     request_length = len(request)
     header = (1).to_bytes(1, byteorder='big') + request_length.to_bytes(4, byteorder='big')
@@ -13,22 +13,18 @@ def recv_response(quic_client, responses, path, server_ip, server_port, stream_i
         #print("-------wait to receive data---------")
         time.sleep(0.2)
         sid, data, flags = quic_client.recv()
-        #print(data)
+        if sid != 1 and len(responses[sid].contents[-1]) < 4096:
+            responses[sid].contents[-1] += data
+            continue
         types = data[0]
         length = int.from_bytes(data[1:5], byteorder='big')
         payload = data[5:]
         if types == 0:
-            #print("data: ", len(payload), length)
-            while len(payload) < length:
-                time.sleep(0.2)
-                sid, d, flags = quic_client.recv()
-                payload += d
-                #print("again: ", len(payload), length)
             responses[sid].contents.append(payload)
             responses[sid].complete = flags
             #print("complete: ", flags)
-            test += len(payload)
-            print(sid, "total length: ", test)
+            test[sid] += len(payload)
+            print(sid, "total length: ", test[sid])
         elif types == 1:
             #print("header", len(payload), length)
             #print("get header frame")
