@@ -15,7 +15,7 @@ def recv_response(client, stream_id, path, server_ip, server_port):
             client.responses[sid].contents[-1] += data
             client.responses[sid].complete = flags
             client.test[sid] += len(data)
-            print(sid, "total length: ", client.test[sid])
+            #print(sid, "total length: ", client.test[sid])
             continue
         types = data[0]
         length = int.from_bytes(data[1:5], byteorder='big')

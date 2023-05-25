@@ -12,7 +12,7 @@ def write_file_from_response(file_path, response):
         with open(file_path, "wb") as f:
             while True:
                 content = response.get_stream_content()
-                print(response.stream_id, content.decode())
+                print(response.stream_id, "write")
                 if content is None:
                     break
                 f.write(content)
