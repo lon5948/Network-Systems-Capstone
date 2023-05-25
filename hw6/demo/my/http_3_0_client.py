@@ -13,7 +13,7 @@ def recv_response(quic_client, responses, path, server_ip, server_port, stream_i
         #print("-------wait to receive data---------")
         time.sleep(0.2)
         sid, data, flags = quic_client.recv()
-        if sid != 1 and len(responses[sid].contents[-1]) < 4096:
+        if sid != 1 and len(responses[sid].contents) > 0 and len(responses[sid].contents[-1]) < 4096:
             responses[sid].contents[-1] += data
             responses[sid].complete = flags
             test[sid] += len(payload)
