@@ -28,7 +28,8 @@ class HTTPClient(): # For HTTP/3
             length = int.from_bytes(data[1:5], byteorder='big')
             payload = data[5:]
             while len(payload) < length:
-                payload += self.quic_client.recv()
+                sid, d, fl = self.quic_client.recv()
+                payload += d
             if types == 0:
                 #test += len(payload)
                 #print("get data frame", test)
