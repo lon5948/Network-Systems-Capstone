@@ -30,7 +30,6 @@ class HTTPClient(): # For HTTP/3
             while len(payload) != length:
                 payload += self.quic_client.recv(length-len(payload))
             '''
-            print("----------------------------------------")
             if types == 0:
                 test += len(payload)
                 print("get data frame", test)
@@ -47,6 +46,8 @@ class HTTPClient(): # For HTTP/3
                     payload[1].split(':')[0].lower(): payload[1].split(':')[1],
                     payload[2].split(':')[0].lower(): payload[2].split(':')[1],
                 }
+            else:
+                print("type: ", types)
         self.num += 1
         if self.num == 4:
             self.quic_client.close()

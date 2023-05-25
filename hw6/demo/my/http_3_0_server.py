@@ -34,6 +34,7 @@ def send_response(quic_server, stream_id, data, finish, directory):
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{file_size}"
         h_frame = (1).to_bytes(1, byteorder='big') + len(h_payload).to_bytes(4, byteorder='big') + h_payload.encode()
         quic_server.send(stream_id, h_frame, end=True)
+        test = 0
         with open(full_path, "rb") as file:
             flag = True
             complete = False
@@ -48,6 +49,8 @@ def send_response(quic_server, stream_id, data, finish, directory):
                     complete = True
                 d_frame = (0).to_bytes(1, byteorder='big') + len(d_payload).to_bytes(4, byteorder='big') + d_payload
                 quic_server.send(stream_id, d_frame, end=complete)
+                test += len(d_payload)
+                print("sending length: ", test)
         print("send finish")
     else:
         d_payload = "<html><header></header><body></body></html>"
