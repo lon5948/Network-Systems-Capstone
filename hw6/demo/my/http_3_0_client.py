@@ -39,7 +39,7 @@ def recv_response(client):
             }
 
         for _, resp in client.responses.items():
-            if len(client.responses) == 4 and resp.complete == False:
+            if len(client.responses) < 4 or resp.complete == False:
                 br = True
                 break
 
