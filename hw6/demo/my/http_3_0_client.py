@@ -25,7 +25,7 @@ def recv_response(client, stream_id, path, server_ip, server_port):
             client.responses[sid].complete = flags
             #print("complete: ", flags)
             client.test[sid] += len(payload)
-            print(sid, "total length: ", client.test[sid])
+            #print(sid, "total length: ", client.test[sid])
         elif types == 1:
             #print("header", len(payload), length)
             #print("get header frame")
