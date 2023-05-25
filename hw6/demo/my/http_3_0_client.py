@@ -31,6 +31,7 @@ class HTTPClient(): # For HTTP/3
                 print(len(payload), length)
                 sid, d, fl = self.quic_client.recv()
                 payload += d
+                flags = fl
             if types == 0:
                 test += len(payload)
                 print("get data frame", test)
