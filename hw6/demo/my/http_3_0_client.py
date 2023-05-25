@@ -8,6 +8,7 @@ def recv_response(client):
     while br:
         br = False
         for s, resp in client.responses.items():
+            print(s)
             if resp.complete == False:
                 br = True
                 break
@@ -44,7 +45,6 @@ def recv_response(client):
             client.responses[sid].complete = flags
             client.test[sid] += len(payload)
             print(sid, "total length: ", client.test[sid])
-
     print("break thread")
 
 class HTTPClient(): # For HTTP/3
@@ -71,7 +71,7 @@ class HTTPClient(): # For HTTP/3
         print(self.stream_id)
         self.stream_id += 2
         print("return response")
-        return self.responses[self.stream_id-2]
+        return response
     
     def parse_url(self, url):
         if url.startswith("http://"):
