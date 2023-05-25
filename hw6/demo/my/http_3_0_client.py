@@ -23,6 +23,7 @@ class HTTPClient(): # For HTTP/3
         test = 0
         while response.complete == False:
             print("-------wait to receive data---------")
+            time.sleep(0.2)
             stream_id, data, flags = self.quic_client.recv()
             #print(data)
             types = data[0]
