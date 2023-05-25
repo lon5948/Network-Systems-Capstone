@@ -36,7 +36,8 @@ def recv_response(client):
                 payload[2].split(':')[0].lower(): payload[2].split(':')[1],
             }
 
-        for _, resp in client.responses.items():
+        for s, resp in client.responses.items():
+            print(s, resp.complete)
             if len(client.responses) < 4 or resp.complete == False:
                 br = True
                 break
