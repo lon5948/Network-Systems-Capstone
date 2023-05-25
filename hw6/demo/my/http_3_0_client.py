@@ -18,13 +18,6 @@ def recv_response(client):
         time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
         try:
-            d = data.decode()
-            print(d)
-            client.responses[sid].contents.append(data)
-            client.responses[sid].complete = flags
-            client.test[sid] += len(payload)
-            print(sid, "total length: ", client.test[sid])
-        except:
             types = data[0]
             length = int.from_bytes(data[1:5], byteorder='big')
             payload = data[5:]
@@ -45,6 +38,12 @@ def recv_response(client):
                     payload[1].split(':')[0].lower(): payload[1].split(':')[1],
                     payload[2].split(':')[0].lower(): payload[2].split(':')[1],
                 }
+        except ValueError:
+            d = data.decode()
+            client.responses[sid].contents.append(data)
+            client.responses[sid].complete = flags
+            client.test[sid] += len(payload)
+            print(sid, "total length: ", client.test[sid])
 
     print("break thread")
 
