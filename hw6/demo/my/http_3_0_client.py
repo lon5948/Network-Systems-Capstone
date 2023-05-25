@@ -19,11 +19,11 @@ def recv_response(client):
             br = True
         time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
-        print("receive data")
         try:
             types = data[0]
             length = int.from_bytes(data[1:5], byteorder='big')
             payload = data[5:]
+            print(data[:5])
             if types == 0:
                 client.responses[sid].contents.append(payload)
                 client.responses[sid].complete = flags
@@ -57,6 +57,8 @@ class HTTPClient(): # For HTTP/3
         self.stream_id = 1
         self.responses = {}
         self.test = {1: 0, 3: 0, 5: 0, 7: 0}
+        for i in self.test.keys():
+            self.responses[i] = Response(i)
         self.thread = threading.Thread(target=recv_response, args=(self,))
         self.thread.start()
 
@@ -69,8 +71,8 @@ class HTTPClient(): # For HTTP/3
         header = (1).to_bytes(1, byteorder='big') + request_length.to_bytes(4, byteorder='big')
         h_frame = header + request.encode()
         self.quic_client.send(self.stream_id, h_frame, end=True)
-        response = Response(self.stream_id)
-        self.responses[self.stream_id] = response
+        # response = Response(self.stream_id)
+        #self.responses[self.stream_id] = response
         print(self.stream_id)
         self.stream_id += 2
         print("return response")
