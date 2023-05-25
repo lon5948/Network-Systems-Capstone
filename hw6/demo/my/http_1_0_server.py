@@ -45,7 +45,6 @@ def receive_data(client_socket, directory):
                         else:
                             response = response_body
                         client_socket.send(response)
-                        time.sleep(0.1)
             else:
                 response_status = b"HTTP/1.0 404 Not Found\r\n"
                 response_content_type = b"Content-Type: text/html\r\n"
