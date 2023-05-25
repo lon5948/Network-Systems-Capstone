@@ -56,9 +56,9 @@ class HTTPClient(): # For HTTP/3
         self.responses[self.stream_id] = response
         print(self.stream_id)
         thread = threading.Thread(target=recv_response, args=(self.quic_client, self.responses, path, server_ip, server_port, self.stream_id))
+        self.stream_id += 2
         self.threads.append(thread) 
         thread.start()
-        self.stream_id += 2
         return response
     
     def parse_url(self, url):
