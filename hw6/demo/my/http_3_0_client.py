@@ -7,10 +7,8 @@ def recv_response(client):
     br = True
     while br:
         br = False
-        time.sleep(0.2)
-        print("----------waite to receive----------")
+        time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
-        print("receive ok")
         if flags == False and len(client.responses[sid].contents) > 0 and len(client.responses[sid].contents[-1]) < 4096:
             client.responses[sid].contents[-1] += data
             client.responses[sid].complete = flags
