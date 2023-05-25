@@ -28,7 +28,7 @@ def recv_response(quic_client, response, path, server_ip, server_port):
             response.complete = flags
             #print("complete: ", flags)
             test += len(payload)
-            print("total length: ", test)
+            #print("total length: ", test)
         elif types == 1:
             #print("header", len(payload), length)
             #print("get header frame")
