@@ -22,19 +22,19 @@ def send_response(quic_server, stream_id, data, finish, directory):
 
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{len(d_payload)}"
         h_frame = (1).to_bytes(1, byteorder='big') + len(h_payload).to_bytes(4, byteorder='big') + h_payload.encode()
-        print("send start")
         quic_server.send(stream_id, h_frame, end=True)
+        print("header frame send")
         quic_server.send(stream_id, d_frame, end=True)
-        print("send finish")
+        print("data frame send")
 
     elif request_path.startswith('/static'):
         full_path = directory + request_path[7:]
         file_size = os.path.getsize(full_path)
-        print("send start")
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{file_size}"
         h_frame = (1).to_bytes(1, byteorder='big') + len(h_payload).to_bytes(4, byteorder='big') + h_payload.encode()
         quic_server.send(stream_id, h_frame, end=True)
         test = 0
+        print("header send")
         with open(full_path, "rb") as file:
             flag = True
             complete = False
@@ -50,10 +50,7 @@ def send_response(quic_server, stream_id, data, finish, directory):
                 d_frame = (0).to_bytes(1, byteorder='big') + len(d_payload).to_bytes(4, byteorder='big') + d_payload
                 quic_server.send(stream_id, d_frame, end=complete)
                 test += len(d_payload)
-                print("send length", test)
-                if complete == True:
-                    print("!!! complete !!!")
-        print("----------------------------------------")
+        print("data in file send finish")
     else:
         d_payload = "<html><header></header><body></body></html>"
         d_frame = (0).to_bytes(1, byteorder='big') + len(d_payload).to_bytes(4, byteorder='big') + d_payload.encode()
