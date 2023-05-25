@@ -42,7 +42,7 @@ class HTTPClient(): # For HTTP/3
                 test += len(payload)
                 print("---------------total length----------------------", test)
             elif types == 1:
-                print("header", print(len(payload), length))
+                print("header", len(payload), length)
                 #print("get header frame")
                 payload = payload.decode()
                 #print(payload)
