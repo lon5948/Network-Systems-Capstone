@@ -1,6 +1,40 @@
-import time
+import time, threading
 from collections import deque
 from my.QUIC.quic_client import QUICClient 
+
+def recv_response(quic_client, response):
+    test = 0
+    while response.complete == False:
+        #print("-------wait to receive data---------")
+        time.sleep(0.2)
+        stream_id, data, flags = quic_client.recv()
+        #print(data)
+        types = data[0]
+        length = int.from_bytes(data[1:5], byteorder='big')
+        payload = data[5:]
+        if types == 0:
+            #print("data: ", len(payload), length)
+            while len(payload) < length:
+                time.sleep(0.2)
+                sid, d, flags = quic_client.recv()
+                payload += d
+                #print("again: ", len(payload), length)
+            response.contents.append(payload)
+            response.complete = flags
+            #print("complete: ", flags)
+            test += len(payload)
+            print("total length: ", test)
+        elif types == 1:
+            #print("header", len(payload), length)
+            #print("get header frame")
+            payload = payload.decode()
+            #print(payload)
+            payload = payload.split('\r\n')
+            response.status = payload[0]
+            response.headers = {
+                payload[1].split(':')[0].lower(): payload[1].split(':')[1],
+                payload[2].split(':')[0].lower(): payload[2].split(':')[1],
+            }
 
 class HTTPClient(): # For HTTP/3
     def __init__(self) -> None:
@@ -20,38 +54,9 @@ class HTTPClient(): # For HTTP/3
         response = Response(self.stream_id)
         print(self.stream_id)
         self.stream_id += 2
-        test = 0
-        while response.complete == False:
-            #print("-------wait to receive data---------")
-            time.sleep(0.2)
-            stream_id, data, flags = self.quic_client.recv()
-            #print(data)
-            types = data[0]
-            length = int.from_bytes(data[1:5], byteorder='big')
-            payload = data[5:]
-            if types == 0:
-                #print("data: ", len(payload), length)
-                while len(payload) < length:
-                    time.sleep(0.2)
-                    sid, d, flags = self.quic_client.recv()
-                    payload += d
-                    #print("again: ", len(payload), length)
-                response.contents.append(payload)
-                response.complete = flags
-                #print("complete: ", flags)
-                test += len(payload)
-                print("total length: ", test)
-            elif types == 1:
-                #print("header", len(payload), length)
-                #print("get header frame")
-                payload = payload.decode()
-                #print(payload)
-                payload = payload.split('\r\n')
-                response.status = payload[0]
-                response.headers = {
-                    payload[1].split(':')[0].lower(): payload[1].split(':')[1],
-                    payload[2].split(':')[0].lower(): payload[2].split(':')[1],
-                }
+        thread = threading.Thread(target=recv_response, args=(self.quic_client, response))
+        thread.start()
+        thread.join()
         self.num += 1
         if self.num == 4:
             self.quic_client.close()
