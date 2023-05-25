@@ -37,6 +37,7 @@ def recv_response(client):
             }
 
         for s, resp in client.responses.items():
+            print(len(client.responses))
             print(s, resp.complete)
             if len(client.responses) < 4 or resp.complete == False:
                 br = True
