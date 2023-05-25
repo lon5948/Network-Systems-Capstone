@@ -51,6 +51,8 @@ def send_response(quic_server, stream_id, data, finish, directory):
                 quic_server.send(stream_id, d_frame, end=complete)
                 test += len(d_payload)
                 print("send length", test)
+                if complete == True:
+                    print("!!! complete !!!")
         print("----------------------------------------")
     else:
         d_payload = "<html><header></header><body></body></html>"
