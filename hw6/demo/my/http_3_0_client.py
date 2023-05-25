@@ -9,6 +9,7 @@ def recv_response(client):
     while True:
         time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
+        print("receive data")
         if flags:
             stop[sid] = True
             client.responses[sid].complete = True
@@ -38,14 +39,11 @@ def recv_response(client):
         else:
             client.responses[sid].contents.append(data[:remain_lens[sid]])
             d = data[remain_lens[sid]:]
-            remain_lens[sid] = 0
-            types = data[0]
-            length = int.from_bytes(data[1:5], byteorder='big')
+            types = d[0]
+            length = int.from_bytes(d[1:5], byteorder='big')
             payload = d[5:]
             remain_lens[sid] = length - len(payload)
             client.responses[sid].contents.append(payload)
-            #print("header", len(payload), length)
-            #print("get header frame")
         if(all(st for _, st in stop.items())):
             break
     print("break thread")
