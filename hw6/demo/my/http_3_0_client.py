@@ -10,10 +10,10 @@ def recv_response(client):
         time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
         if flags:
-            stop[sid]
+            stop[sid] = True
             client.responses[sid].complete = True
         if remain_lens[sid] == -1:
-            print("header ohoh")
+            print(sid, "header")
             types = data[0]
             length = int.from_bytes(data[1:5], byteorder='big')
             remain_lens[sid] = 0
