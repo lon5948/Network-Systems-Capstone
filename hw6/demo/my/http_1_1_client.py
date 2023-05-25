@@ -1,10 +1,11 @@
-import socket
+import socket, time
 BUFFER_SIZE = 8192
 
 class HTTPClient(): # For HTTP/1.1
     def __init__(self) -> None:
         self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.num = 0
+        
     def get(self, url, headers=None, stream=False):
         server_ip, server_port, path = self.parse_url(url)
         if path == '/':
