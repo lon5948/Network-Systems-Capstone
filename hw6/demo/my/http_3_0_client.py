@@ -8,10 +8,10 @@ def recv_response(client):
     while br:
         br = False
         for s, resp in client.responses.items():
-            if len(client.responses) < 4 or resp.complete == False:
+            if resp.complete == False:
                 br = True
                 break
-        if br == False:
+        if len(client.responses) == 4 and br == False:
             break
         #time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
