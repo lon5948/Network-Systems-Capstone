@@ -40,6 +40,7 @@ def recv_response(client):
             if len(client.responses) < 4 or resp.complete == False:
                 br = True
                 break
+    print("break thread")
 
 class HTTPClient(): # For HTTP/3
     def __init__(self) -> None:
