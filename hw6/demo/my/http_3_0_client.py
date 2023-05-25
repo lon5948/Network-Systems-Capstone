@@ -60,7 +60,7 @@ class HTTPClient(): # For HTTP/3
         thread = threading.Thread(target=recv_response, args=(self.quic_client, response, path, server_ip, server_port))
         self.threads.append(thread) 
         thread.start()
-        return self.responses[-1]
+        return response
     
     def parse_url(self, url):
         if url.startswith("http://"):
