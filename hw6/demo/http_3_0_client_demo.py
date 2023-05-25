@@ -11,6 +11,7 @@ def write_file_from_response(file_path, response):
         print(f"{file_path} begin")
         with open(file_path, "wb") as f:
             while True:
+                print(len(response.contents))
                 content = response.get_stream_content()
                 if content is None:
                     break
