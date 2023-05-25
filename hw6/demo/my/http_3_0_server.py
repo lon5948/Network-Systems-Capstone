@@ -49,6 +49,7 @@ def send_response(quic_server, stream_id, data, finish, directory):
                     complete = True
                 d_frame = (0).to_bytes(1, byteorder='big') + len(d_payload).to_bytes(4, byteorder='big') + d_payload
                 quic_server.send(stream_id, d_frame, end=complete)
+                test += len(d_payload)
                 print("send length", test)
         print("----------------------------------------")
     else:

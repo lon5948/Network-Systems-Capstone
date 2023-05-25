@@ -26,18 +26,18 @@ class HTTPClient(): # For HTTP/3
             types = data[0]
             length = int.from_bytes(data[1:5], byteorder='big')
             payload = data[5:]
-            while len(payload) < length:
-                #print(len(payload), length)
-                sid, d, fl = self.quic_client.recv()
-                payload += d
             if types == 0:
-                print("header: ", len(payload), length)
+                print("data: ", len(payload), length)
+                if len(payload) < length:
+                    sid, d, fl = self.quic_client.recv()
+                    payload += d
+                print("again: ", len(payload), length)
                 #print("get data frame", test)
                 response.contents.append(payload)
                 response.complete = flags
                 print("complete: ", flags)
             elif types == 1:
-                print("data", print(len(payload), length))
+                print("header", print(len(payload), length))
                 #print("get header frame")
                 payload = payload.decode()
                 #print(payload)
