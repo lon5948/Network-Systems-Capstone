@@ -88,10 +88,8 @@ class Response():
         self.complete = False
         
     def get_headers(self):
-        begin_time = time.time()
-        while self.status == "Not yet":
-            if time.time() - begin_time > 5:
-                return None
+        while self.status == "Not yet" or not self.complete:
+            time.sleep(0.01)
         return self.headers
     
     def get_full_body(self): # used for handling short body
