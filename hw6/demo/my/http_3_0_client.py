@@ -4,6 +4,7 @@ from my.QUIC.quic_client import QUICClient
 
 def recv_response(client):
     print("enter thread")
+    test = {1: 0, 3: 0, 5: 0, 7: 0}
     remain_lens = {1: -1, 3: -1, 5: -1, 7: -1}
     stop = {1: False, 3: False, 5: False, 7: False}
     while True:
@@ -32,18 +33,26 @@ def recv_response(client):
             payload = data[5:]
             remain_lens[sid] = length - len(payload)
             client.responses[sid].contents.append(payload)
+            test[sid] += len(payload)
+            print(test)
         elif len(data) <= remain_lens[sid]:
             payload = data
             remain_lens[sid] -= len(payload)
             client.responses[sid].contents.append(payload)
+            test[sid] += len(payload)
+            print(test)
         else:
             client.responses[sid].contents.append(data[:remain_lens[sid]])
+            test[sid] += remain_lens[sid]
+            print(test)
             d = data[remain_lens[sid]:]
             types = d[0]
             length = int.from_bytes(d[1:5], byteorder='big')
             payload = d[5:]
             remain_lens[sid] = length - len(payload)
             client.responses[sid].contents.append(payload)
+            test[sid] += len(payload)
+            print(test)
         if(all(st for _, st in stop.items())):
             break
     print("break thread")
