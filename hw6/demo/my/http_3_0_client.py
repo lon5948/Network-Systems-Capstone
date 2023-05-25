@@ -19,6 +19,7 @@ def recv_response(client):
         sid, data, flags = client.quic_client.recv()
         try:
             d = data.decode()
+            print(d)
             client.responses[sid].contents.append(data)
             client.responses[sid].complete = flags
             client.test[sid] += len(payload)
