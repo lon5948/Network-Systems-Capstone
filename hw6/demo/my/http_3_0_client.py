@@ -28,7 +28,7 @@ def recv_response(quic_client, response, path, server_ip, server_port):
             response.complete = flags
             #print("complete: ", flags)
             test += len(payload)
-            #print("total length: ", test)
+            print(response.stream_id, "total length: ", test)
         elif types == 1:
             #print("header", len(payload), length)
             #print("get header frame")
@@ -101,5 +101,6 @@ class Response():
             time.sleep(0.01)
         if len(self.contents) == 0: # contents is a buffer, busy waiting for new content
             return None
+        print("get content")
         content = self.contents.popleft() # pop content from deque
         return content # the part content of the HTTP response body
