@@ -111,12 +111,11 @@ class Response():
         return self.body # the full content of HTTP response body
     
     def get_stream_content(self): # used for handling long body
-        time.sleep(1)
-        '''
+        
         while not self.complete and len(self.contents) == 0:
             time.sleep(0.01)
         if len(self.contents) == 0: # contents is a buffer, busy waiting for new content
             return None
         content = self.contents.popleft() # pop content from deque
         return content # the part content of the HTTP response body
-        '''
+        
