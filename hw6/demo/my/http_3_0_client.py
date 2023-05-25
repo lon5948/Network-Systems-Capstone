@@ -23,7 +23,7 @@ class HTTPClient(): # For HTTP/3
         test = 0
         while response.complete == False:
             stream_id, data, flags = self.quic_client.recv()
-            #print(data)
+            print(data)
             types = data[0]
             length = int.from_bytes(data[1:5], byteorder='big')
             payload = data[5:]
