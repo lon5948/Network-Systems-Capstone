@@ -2,8 +2,7 @@ import time, threading
 from collections import deque
 from my.QUIC.quic_client import QUICClient 
 
-def recv_response(quic_client, responses, path, server_ip, server_port, stream_id):
-    test = {1: 0, 3: 0, 5: 0, 7: 0}
+def recv_response(quic_client, responses, path, server_ip, server_port, stream_id, test):
     request = f"GET {path} http {server_ip}:{server_port}"
     request_length = len(request)
     header = (1).to_bytes(1, byteorder='big') + request_length.to_bytes(4, byteorder='big')
@@ -47,6 +46,7 @@ class HTTPClient(): # For HTTP/3
         self.stream_id = 1
         self.threads = []
         self.responses = {}
+        self.test = {1: 0, 3: 0, 5: 0, 7: 0}
 
     def get(self, url, headers=None):
         server_ip, server_port, path = self.parse_url(url)
@@ -55,7 +55,7 @@ class HTTPClient(): # For HTTP/3
         response = Response(self.stream_id)
         self.responses[self.stream_id] = response
         print(self.stream_id)
-        thread = threading.Thread(target=recv_response, args=(self.quic_client, self.responses, path, server_ip, server_port, self.stream_id))
+        thread = threading.Thread(target=recv_response, args=(self.quic_client, self.responses, path, server_ip, server_port, self.stream_id, self.test))
         self.stream_id += 2
         self.threads.append(thread) 
         thread.start()
