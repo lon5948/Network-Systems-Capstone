@@ -29,6 +29,7 @@ class HTTPClient(): # For HTTP/3
             if types == 0:
                 print("data: ", len(payload), length)
                 if len(payload) < length:
+                    time.sleep(1)
                     sid, d, fl = self.quic_client.recv()
                     payload += d
                 print("again: ", len(payload), length)
