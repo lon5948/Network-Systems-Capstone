@@ -7,6 +7,12 @@ def recv_response(client):
     br = True
     while br:
         br = False
+        for s, resp in client.responses.items():
+            if len(client.responses) < 4 or resp.complete == False:
+                br = True
+                break
+        if br == False:
+            break
         #time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
         if flags == False and len(client.responses[sid].contents) > 0 and len(client.responses[sid].contents[-1]) < 4096:
@@ -36,12 +42,6 @@ def recv_response(client):
                 payload[2].split(':')[0].lower(): payload[2].split(':')[1],
             }
 
-        for s, resp in client.responses.items():
-            print(len(client.responses))
-            print(s, resp.complete)
-            if len(client.responses) < 4 or resp.complete == False:
-                br = True
-                break
     print("break thread")
 
 class HTTPClient(): # For HTTP/3
