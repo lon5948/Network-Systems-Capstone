@@ -8,6 +8,7 @@ import xml.etree.ElementTree as ET
 
 def write_file_from_response(file_path, response):
     if response:
+        print(f"{file_path} begin")
         with open(file_path, "wb") as f:
             while True:
                 content = response.get_stream_content()

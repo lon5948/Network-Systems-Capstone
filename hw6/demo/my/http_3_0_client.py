@@ -13,7 +13,7 @@ def recv_response(client):
             client.responses[sid].contents[-1] += data
             client.responses[sid].complete = flags
             client.test[sid] += len(data)
-            #print(sid, "total length: ", client.test[sid])
+            print(sid, "total length: ", client.test[sid])
             continue
         types = data[0]
         length = int.from_bytes(data[1:5], byteorder='big')
@@ -23,7 +23,7 @@ def recv_response(client):
             client.responses[sid].complete = flags
             #print("complete: ", flags)
             client.test[sid] += len(payload)
-            #print(sid, "total length: ", client.test[sid])
+            print(sid, "total length: ", client.test[sid])
         elif types == 1:
             #print("header", len(payload), length)
             #print("get header frame")
