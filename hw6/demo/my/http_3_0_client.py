@@ -13,6 +13,7 @@ def recv_response(client):
             stop[sid]
             client.responses[sid].complete = True
         if remain_lens[sid] == -1:
+            print("header ohoh")
             types = data[0]
             length = int.from_bytes(data[1:5], byteorder='big')
             remain_lens[sid] = 0
