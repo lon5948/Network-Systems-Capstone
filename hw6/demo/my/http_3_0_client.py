@@ -20,6 +20,7 @@ class HTTPClient(): # For HTTP/3
         response = Response(self.stream_id)
         print(self.stream_id)
         self.stream_id += 2
+        test = 0
         while response.complete == False:
             stream_id, data, flags = self.quic_client.recv()
             types = data[0]
@@ -31,7 +32,8 @@ class HTTPClient(): # For HTTP/3
             '''
             print("----------------------------------------")
             if types == 0:
-                print("get data frame")
+                test += len(payload)
+                print("get data frame", test)
                 response.contents.append(payload)
                 if flags == True:
                     response.complete = True
