@@ -15,6 +15,9 @@ def recv_response(quic_client, responses, path, server_ip, server_port, stream_i
         sid, data, flags = quic_client.recv()
         if sid != 1 and len(responses[sid].contents[-1]) < 4096:
             responses[sid].contents[-1] += data
+            responses[sid].complete = flags
+            test[sid] += len(payload)
+            print(sid, "total length: ", test[sid])
             continue
         types = data[0]
         length = int.from_bytes(data[1:5], byteorder='big')
