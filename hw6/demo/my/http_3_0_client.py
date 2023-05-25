@@ -13,6 +13,8 @@ def recv_response(client):
                 break
         if len(client.responses) == 4 and br == False:
             break
+        else:
+            br = True
         #time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
         if flags == False and len(client.responses[sid].contents) > 0 and len(client.responses[sid].contents[-1]) < 4096:
