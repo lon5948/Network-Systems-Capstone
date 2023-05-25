@@ -102,14 +102,11 @@ class Response():
         return self.headers
     
     def get_full_body(self): # used for handling short body
-        time.sleep(1)
-        '''
         while not self.complete:
             time.sleep(0.01)
         while len(self.contents) > 0:
             self.body += self.contents.popleft()
         return self.body # the full content of HTTP response body
-        '''
     
     def get_stream_content(self): # used for handling long body
         time.sleep(1)
