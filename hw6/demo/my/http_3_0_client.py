@@ -2,8 +2,13 @@ import time, threading
 from collections import deque
 from my.QUIC.quic_client import QUICClient 
 
-def recv_response(quic_client, response):
+def recv_response(quic_client, response, path, server_ip, server_port):
     test = 0
+    request = f"GET {path} http {server_ip}:{server_port}"
+    request_length = len(request)
+    header = (1).to_bytes(1, byteorder='big') + request_length.to_bytes(4, byteorder='big')
+    h_frame = header + request.encode()
+    quic_client.send(response.stream_id, h_frame, end=True)
     while response.complete == False:
         #print("-------wait to receive data---------")
         time.sleep(0.2)
@@ -41,26 +46,21 @@ class HTTPClient(): # For HTTP/3
         self.quic_client = QUICClient()
         self.num = 0
         self.stream_id = 1
+        self.threads = []
+        self.responses = []
 
     def get(self, url, headers=None):
         server_ip, server_port, path = self.parse_url(url)
         if path == '/':
             self.quic_client.connect((server_ip, server_port))
-        request = f"GET {path} http {server_ip}:{server_port}"
-        request_length = len(request)
-        header = (1).to_bytes(1, byteorder='big') + request_length.to_bytes(4, byteorder='big')
-        h_frame = header + request.encode()
-        self.quic_client.send(self.stream_id, h_frame, end=True)
         response = Response(self.stream_id)
+        self.responses.append(response)
         print(self.stream_id)
         self.stream_id += 2
-        thread = threading.Thread(target=recv_response, args=(self.quic_client, response))
+        thread = threading.Thread(target=recv_response, args=(self.quic_client, response, path, server_ip, server_port))
+        self.threads.append(thread) 
         thread.start()
-        thread.join()
-        self.num += 1
-        if self.num == 4:
-            self.quic_client.close()
-        return response
+        return self.responses[-1]
     
     def parse_url(self, url):
         if url.startswith("http://"):
