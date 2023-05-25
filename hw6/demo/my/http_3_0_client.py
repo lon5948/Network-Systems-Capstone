@@ -9,7 +9,6 @@ def recv_response(client, stream_id, path, server_ip, server_port):
     h_frame = header + request.encode()
     client.quic_client.send(stream_id, h_frame, end=True)
     while client.responses[stream_id].complete == False:
-        #print("-------wait to receive data---------")
         time.sleep(0.2)
         sid, data, flags = client.quic_client.recv()
         if sid != 1 and len(client.responses[sid].contents) > 0 and len(client.responses[sid].contents[-1]) < 4096:
