@@ -49,8 +49,8 @@ def send_response(quic_server, stream_id, data, finish, directory):
                     complete = True
                 d_frame = (0).to_bytes(1, byteorder='big') + len(d_payload).to_bytes(4, byteorder='big') + d_payload
                 quic_server.send(stream_id, d_frame, end=complete)
-                test += len(d_payload)
-        print("send finish")
+                print("send length", test)
+        print("----------------------------------------")
     else:
         d_payload = "<html><header></header><body></body></html>"
         d_frame = (0).to_bytes(1, byteorder='big') + len(d_payload).to_bytes(4, byteorder='big') + d_payload.encode()
@@ -70,11 +70,11 @@ class HTTPServer():
         self.quic_server.accept()
         while True:
             stream_id, data, finish = self.quic_server.recv()
-            if not data:
-                break
             thread = threading.Thread(target=send_response, args=(self.quic_server, stream_id, data, finish, self.directory))
             self.threads.append(thread)
             thread.start()
+            if len(self.threads) == 4:
+                break
         for th in self.threads:
             th.join()
 
