@@ -8,7 +8,7 @@ def recv_response(client):
     while br:
         br = False
         for s, resp in client.responses.items():
-            print(s)
+            print(s, len(resp.contents))
             if resp.complete == False:
                 br = True
                 break
@@ -27,7 +27,7 @@ def recv_response(client):
                 client.responses[sid].complete = flags
                 #print("complete: ", flags)
                 client.test[sid] += len(payload)
-                print(sid, "total length: ", client.test[sid])
+                #print(sid, "total length: ", client.test[sid])
             elif types == 1:
                 #print("header", len(payload), length)
                 #print("get header frame")
@@ -44,8 +44,9 @@ def recv_response(client):
             client.responses[sid].contents.append(data)
             client.responses[sid].complete = flags
             client.test[sid] += len(payload)
-            print(sid, "total length: ", client.test[sid])
+            #print(sid, "total length: ", client.test[sid])
     print("break thread")
+        
 
 class HTTPClient(): # For HTTP/3
     def __init__(self) -> None:
@@ -71,7 +72,7 @@ class HTTPClient(): # For HTTP/3
         print(self.stream_id)
         self.stream_id += 2
         print("return response")
-        return response
+        return self.responses[self.stream_id-2]
     
     def parse_url(self, url):
         if url.startswith("http://"):
@@ -99,16 +100,22 @@ class Response():
         return self.headers
     
     def get_full_body(self): # used for handling short body
+        time.sleep(1)
+        '''
         while not self.complete:
             time.sleep(0.01)
         while len(self.contents) > 0:
             self.body += self.contents.popleft()
         return self.body # the full content of HTTP response body
+        '''
     
     def get_stream_content(self): # used for handling long body
+        time.sleep(1)
+        '''
         while not self.complete and len(self.contents) == 0:
             time.sleep(0.01)
         if len(self.contents) == 0: # contents is a buffer, busy waiting for new content
             return None
         content = self.contents.popleft() # pop content from deque
         return content # the part content of the HTTP response body
+        '''
