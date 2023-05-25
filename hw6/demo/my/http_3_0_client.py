@@ -17,32 +17,33 @@ def recv_response(client):
             br = True
         time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
-        if flags == False and len(client.responses[sid].contents) > 0 and len(client.responses[sid].contents[-1]) < 4096:
-            client.responses[sid].contents[-1] += data
+        try:
+            d = data.decode()
+            client.responses[sid].contents.append(data)
             client.responses[sid].complete = flags
-            client.test[sid] += len(data)
-            print(sid, "total length: ", client.test[sid])
-            continue
-        types = data[0]
-        length = int.from_bytes(data[1:5], byteorder='big')
-        payload = data[5:]
-        if types == 0:
-            client.responses[sid].contents.append(payload)
-            client.responses[sid].complete = flags
-            #print("complete: ", flags)
             client.test[sid] += len(payload)
             print(sid, "total length: ", client.test[sid])
-        elif types == 1:
-            #print("header", len(payload), length)
-            #print("get header frame")
-            payload = payload.decode()
-            #print(payload)
-            payload = payload.split('\r\n')
-            client.responses[sid].status = payload[0]
-            client.responses[sid].headers = {
-                payload[1].split(':')[0].lower(): payload[1].split(':')[1],
-                payload[2].split(':')[0].lower(): payload[2].split(':')[1],
-            }
+        except:
+            types = data[0]
+            length = int.from_bytes(data[1:5], byteorder='big')
+            payload = data[5:]
+            if types == 0:
+                client.responses[sid].contents.append(payload)
+                client.responses[sid].complete = flags
+                #print("complete: ", flags)
+                client.test[sid] += len(payload)
+                print(sid, "total length: ", client.test[sid])
+            elif types == 1:
+                #print("header", len(payload), length)
+                #print("get header frame")
+                payload = payload.decode()
+                #print(payload)
+                payload = payload.split('\r\n')
+                client.responses[sid].status = payload[0]
+                client.responses[sid].headers = {
+                    payload[1].split(':')[0].lower(): payload[1].split(':')[1],
+                    payload[2].split(':')[0].lower(): payload[2].split(':')[1],
+                }
 
     print("break thread")
 
@@ -70,7 +71,7 @@ class HTTPClient(): # For HTTP/3
         print(self.stream_id)
         self.stream_id += 2
         print("return response")
-        return response
+        return self.responses[self.stream_id-2]
     
     def parse_url(self, url):
         if url.startswith("http://"):
