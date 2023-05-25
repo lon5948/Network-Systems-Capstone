@@ -1,4 +1,4 @@
-from QUIC.quic_server import QUICServer
+from my.QUIC.quic_server import QUICServer
 import threading, os
 
 CHUNK_SIZE = 4096
@@ -8,7 +8,6 @@ def send_response(quic_server, stream_id, data, finish, directory):
     request_length = int.from_bytes(data[1:5], byteorder='big')
     request = data[5:5+request_length].decode().split(' ')
     request_path = request[1]
-    print("request path", request_path)
     if request_path == "/":
         d_payload = "<html><header></header><body>"
         files = os.listdir(directory)
@@ -25,7 +24,6 @@ def send_response(quic_server, stream_id, data, finish, directory):
 
         quic_server.send(stream_id, h_frame, end=True)
         quic_server.send(stream_id, d_frame, end=True)
-        print("response send")
 
     elif request_path.startswith('/static'):
         full_path = directory + request_path[7:]
@@ -34,7 +32,6 @@ def send_response(quic_server, stream_id, data, finish, directory):
         h_payload = f"200 OK\r\nContent-Type:text/html\r\nContent-Length:{file_size}"
         h_frame = (1).to_bytes(1, byteorder='big') + len(h_payload).to_bytes(4, byteorder='big') + h_payload.encode()
         quic_server.send(stream_id, h_frame, end=True)
-        print("header response send")
         with open(full_path, "rb") as file:
             flag = True
             complete = False
@@ -49,8 +46,6 @@ def send_response(quic_server, stream_id, data, finish, directory):
                     complete = True
                 d_frame = (0).to_bytes(1, byteorder='big') + len(d_payload).to_bytes(4, byteorder='big') + d_payload
                 quic_server.send(stream_id, d_frame, end=complete)
-                print("send file")
-        print("file response finish")
     else:
         d_payload = "<html><header></header><body></body></html>"
         d_frame = (0).to_bytes(1, byteorder='big') + len(d_payload).to_bytes(4, byteorder='big') + d_payload.encode()
@@ -66,13 +61,10 @@ class HTTPServer():
         self.threads = []
 
     def run(self):
-        print("start to run")
         self.quic_server.listen(self.server_addr)
         self.quic_server.accept()
-        print("accept finish")
         while True:
             stream_id, data, finish = self.quic_server.recv()
-            print("receive request")
             if not data:
                 break
             thread = threading.Thread(target=send_response, args=(self.quic_server, stream_id, data, finish, self.directory))

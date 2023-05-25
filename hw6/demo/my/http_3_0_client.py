@@ -1,6 +1,6 @@
 import time
 from collections import deque
-from QUIC.quic_client import QUICClient 
+from my.QUIC.quic_client import QUICClient 
 
 class HTTPClient(): # For HTTP/3
     def __init__(self) -> None:
@@ -9,7 +9,6 @@ class HTTPClient(): # For HTTP/3
         self.stream_id = 1
 
     def get(self, url, headers=None):
-        print("get", url)
         server_ip, server_port, path = self.parse_url(url)
         if path == '/':
             self.quic_client.connect((server_ip, server_port))
@@ -18,13 +17,10 @@ class HTTPClient(): # For HTTP/3
         header = (1).to_bytes(1, byteorder='big') + request_length.to_bytes(4, byteorder='big')
         h_frame = header + request.encode()
         self.quic_client.send(self.stream_id, h_frame, end=True)
-        print("request send")
         response = Response(self.stream_id)
         self.stream_id += 2
         while response.complete == False:
-            print("------wait to receive packet-------")
             stream_id, data, flags = self.quic_client.recv()
-            print("[REICEIVE]]", data)
             types = data[0]
             length = int.from_bytes(data[1:5], byteorder='big')
             payload = data[5:5+length]
@@ -33,12 +29,10 @@ class HTTPClient(): # For HTTP/3
                 payload += self.quic_client.recv(length-len(payload))
             '''
             if types == 0:
-                print("data frame")
                 response.contents.append(payload)
                 if flags == True:
                     response.complete = True
             elif types == 1:
-                print("header frame")
                 payload = payload.decode()
                 payload = payload.split('\r\n')
                 response.status = payload[0]
@@ -46,7 +40,6 @@ class HTTPClient(): # For HTTP/3
                     payload[1].split(':')[0].lower(): payload[1].split(':')[1],
                     payload[2].split(':')[0].lower(): payload[2].split(':')[1],
                 }
-        print("get response finish")
         self.num += 1
         if self.num == 4:
             self.quic_client.close()
