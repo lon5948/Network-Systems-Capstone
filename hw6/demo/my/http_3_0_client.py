@@ -58,7 +58,7 @@ class HTTPClient(): # For HTTP/3
         request_length = len(request)
         header = (1).to_bytes(1, byteorder='big') + request_length.to_bytes(4, byteorder='big')
         h_frame = header + request.encode()
-        self.quic_client.quic_client.send(self.stream_id, h_frame, end=True)
+        self.quic_client.send(self.stream_id, h_frame, end=True)
         response = Response(self.stream_id)
         self.responses[self.stream_id] = response
         print(self.stream_id)
