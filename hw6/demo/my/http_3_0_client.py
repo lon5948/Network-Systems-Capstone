@@ -8,7 +8,7 @@ def recv_response(client):
     remain_lens = {1: -1, 3: -1, 5: -1, 7: -1}
     stop = {1: False, 3: False, 5: False, 7: False}
     while True:
-        time.sleep(0.1)
+        time.sleep(0.01)
         sid, data, flags = client.quic_client.recv()
         print("receive data")
         if flags:
