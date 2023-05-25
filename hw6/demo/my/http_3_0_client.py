@@ -1,6 +1,6 @@
 import time, threading
 from collections import deque
-from QUIC.quic_client import QUICClient 
+from my.QUIC.quic_client import QUICClient 
 
 def recv_response(client):
     print("enter thread")
