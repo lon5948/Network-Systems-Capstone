@@ -7,6 +7,7 @@ def recv_response(client):
     br = True
     while br:
         br = False
+        print("start")
         for s, resp in client.responses.items():
             print(s, len(resp.contents))
             if resp.complete == False:
