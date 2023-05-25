@@ -30,10 +30,9 @@ class HTTPClient(): # For HTTP/3
             if types == 0:
                 print("data: ", len(payload), length)
                 while len(payload) < length:
-                    time.sleep(0.2)
-                    sid, d, fl = self.quic_client.recv()
+                    #time.sleep(0.2)
+                    sid, d, flags = self.quic_client.recv()
                     payload += d
-                    flags = fl
                     print("again: ", len(payload), length)
                 #print("get data frame", test)
                 response.contents.append(payload)
