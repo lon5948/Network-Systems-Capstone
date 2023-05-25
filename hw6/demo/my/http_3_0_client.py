@@ -90,20 +90,16 @@ class Response():
         return self.headers
     
     def get_full_body(self): # used for handling short body
-        begin_time = time.time()
         while not self.complete:
-            if time.time() - begin_time > 5:
-                return None
-        if len(self.body) > 0:
-            return self.body
+            time.sleep(0.01)
         while len(self.contents) > 0:
             self.body += self.contents.popleft()
         return self.body # the full content of HTTP response body
     
     def get_stream_content(self): # used for handling long body
-        begin_time = time.time()
-        while len(self.contents) == 0: # contents is a buffer, busy waiting for new content
-            if self.complete or time.time() - begin_time > 5: # if response is complete or timeout
-                return None
+        while not self.complete:
+            time.sleep(0.01)
+        if len(self.contents) == 0: # contents is a buffer, busy waiting for new content
+            return None
         content = self.contents.popleft() # pop content from deque
         return content # the part content of the HTTP response body
