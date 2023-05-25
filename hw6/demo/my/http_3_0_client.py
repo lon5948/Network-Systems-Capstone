@@ -3,6 +3,7 @@ from collections import deque
 from my.QUIC.quic_client import QUICClient 
 
 def recv_response(client):
+    print("enter thread")
     br = True
     while br:
         br = False
@@ -63,6 +64,7 @@ class HTTPClient(): # For HTTP/3
         self.responses[self.stream_id] = response
         print(self.stream_id)
         self.stream_id += 2
+        print("return response")
         return response
     
     def parse_url(self, url):
