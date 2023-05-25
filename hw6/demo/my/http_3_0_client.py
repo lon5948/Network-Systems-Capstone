@@ -20,30 +20,24 @@ class HTTPClient(): # For HTTP/3
         response = Response(self.stream_id)
         print(self.stream_id)
         self.stream_id += 2
-        test = 0
-        test2 = 0
-        test3 = 0
         while response.complete == False:
             stream_id, data, flags = self.quic_client.recv()
             #print(data)
-            test3 += len(data)
             types = data[0]
             length = int.from_bytes(data[1:5], byteorder='big')
             payload = data[5:]
-            test2 += length
             while len(payload) < length:
                 #print(len(payload), length)
                 sid, d, fl = self.quic_client.recv()
                 payload += d
-                test3 += len(d)
-            print(len(payload), length)
             if types == 0:
-                test += len(payload)
+                print("header: ", len(payload), length)
                 #print("get data frame", test)
                 response.contents.append(payload)
-                if flags == True:
-                    response.complete = True
+                response.complete = flags
+                print("complete: ", flags)
             elif types == 1:
+                print("data", print(len(payload), length))
                 #print("get header frame")
                 payload = payload.decode()
                 #print(payload)
@@ -53,9 +47,7 @@ class HTTPClient(): # For HTTP/3
                     payload[1].split(':')[0].lower(): payload[1].split(':')[1],
                     payload[2].split(':')[0].lower(): payload[2].split(':')[1],
                 }
-        print("payload: ", test)
-        print("length: ", test2)
-        print("data length: ", test3)
+
         self.num += 1
         if self.num == 4:
             self.quic_client.close()
