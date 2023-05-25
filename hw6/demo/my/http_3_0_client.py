@@ -33,6 +33,7 @@ class HTTPClient(): # For HTTP/3
                     time.sleep(0.2)
                     sid, d, fl = self.quic_client.recv()
                     payload += d
+                    flags = fl
                     print("again: ", len(payload), length)
                 #print("get data frame", test)
                 response.contents.append(payload)
