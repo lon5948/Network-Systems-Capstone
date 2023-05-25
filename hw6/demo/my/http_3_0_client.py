@@ -19,6 +19,7 @@ def recv_response(client):
             br = True
         time.sleep(0.1)
         sid, data, flags = client.quic_client.recv()
+        print("receive data")
         try:
             types = data[0]
             length = int.from_bytes(data[1:5], byteorder='big')
