@@ -36,12 +36,11 @@ class HTTPClient(): # For HTTP/3
                     sid, d, flags = self.quic_client.recv()
                     payload += d
                     #print("again: ", len(payload), length)
-                #print("get data frame", test)
                 response.contents.append(payload)
                 response.complete = flags
                 #print("complete: ", flags)
                 test += len(payload)
-                #print("total length: ", test)
+                print("total length: ", test)
             elif types == 1:
                 #print("header", len(payload), length)
                 #print("get header frame")
