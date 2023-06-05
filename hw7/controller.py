@@ -4,7 +4,7 @@ from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
 from ryu.ofproto import ofproto_v1_3
 from ryu.lib.packet import packet
-from ryu.lib.packet import ethernet
+from ryu.lib.packet import ethernet, ether_types
 
 class Controller(app_manager.RyuApp):
     OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
@@ -64,7 +64,7 @@ class Controller(app_manager.RyuApp):
 
         # Filter_table_1, check if packet is ICMP
         match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP,
-                                ip_proto=inet.IPPROTO_ICMP)
+                                ip_proto=1)
         actions = [parser.OFPActionOutput(ofproto.OFPP_CONTROLLER, ofproto.OFPCML_NO_BUFFER)]
         self.add_flow(datapath, 2, match, actions)
 
@@ -73,6 +73,9 @@ class Controller(app_manager.RyuApp):
         actions = []
         self.add_flow(datapath, 3, match, actions)
 
-        # ForwArd_table
         match = parser.OFPMatch(in_port=4)
         actions = []
+        self.add_flow(datapath, 3, match, actions)
+
+        # Forward Table
+
