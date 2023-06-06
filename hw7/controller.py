@@ -33,8 +33,8 @@ class SimpleSwitch13(app_manager.RyuApp):
 
         self.add_default_table(datapath)
         self.add_filter_table_1(datapath)
-        self.apply_filter_table_rules_1(datapath)
         self.add_filter_table_2(datapath)
+        self.apply_filter_table_rules_1(datapath)
         self.apply_filter_table_rules_2(datapath)
 
     def add_flow(self, datapath, priority, match, actions, buffer_id=None):
@@ -68,21 +68,21 @@ class SimpleSwitch13(app_manager.RyuApp):
                                 priority=1, instructions=inst)
         datapath.send_msg(mod)
     
+    def apply_filter_table_rules_1(self, datapath):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ip_proto=in_proto.IPPROTO_ICMP)
+        inst = [parser.OFPInstructionGoToTable(FILTER_TABLE_2)]
+        mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_1,
+                                priority=100, match=match, instructions=inst)
+        datapath.send_msg(mod)
+
     def add_filter_table_2(self, datapath):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
         inst = [parser.OFPInstructionGotoTable(FORWARD_TABLE)]
         mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_2, 
                                 priority=1, instructions=inst)
-        datapath.send_msg(mod)
-
-    def apply_filter_table_rules_1(self, datapath):
-        ofproto = datapath.ofproto
-        parser = datapath.ofproto_parser
-        inst = [parser.OFPInstructionGoToTable(FILTER_TABLE_2)]
-        match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ip_proto=in_proto.IPPROTO_ICMP)
-        mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_1,
-                                priority=100, match=match, instructions=inst)
         datapath.send_msg(mod)
 
     def apply_filter_table_rules_2(self, datapath):
