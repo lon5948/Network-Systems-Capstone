@@ -2,17 +2,22 @@ from ryu.base import app_manager
 from ryu.controller import ofp_event
 from ryu.controller.handler import CONFIG_DISPATCHER, MAIN_DISPATCHER
 from ryu.controller.handler import set_ev_cls
-from ryu.ofproto import ofproto_v1_5
+from ryu.ofproto import ofproto_v1_3
 from ryu.lib.packet import packet
 from ryu.lib.packet import ethernet
 from ryu.lib.packet import ether_types
+from ryu.lib.packet import ipv4
+from ryu.lib.packet import in_proto
 
+FILTER_TABLE_1 = 1
+FILTER_TABLE_2 = 2
+FORWARD_TABLE = 3
 
-class Controller(app_manager.RyuApp):
-    OFP_VERSIONS = [ofproto_v1_5.OFP_VERSION]
+class SimpleSwitch13(app_manager.RyuApp):
+    OFP_VERSIONS = [ofproto_v1_3.OFP_VERSION]
 
     def __init__(self, *args, **kwargs):
-        super(Controller, self).__init__(*args, **kwargs)
+        super(SimpleSwitch13, self).__init__(*args, **kwargs)
         self.mac_to_port = {}
 
     @set_ev_cls(ofp_event.EventOFPSwitchFeatures, CONFIG_DISPATCHER)
@@ -26,19 +31,78 @@ class Controller(app_manager.RyuApp):
                                           ofproto.OFPCML_NO_BUFFER)]
         self.add_flow(datapath, 0, match, actions)
 
-    def add_flow(self, datapath, priority, match, actions):
+        self.add_default_table(datapath)
+        self.add_filter_table_1(datapath)
+        self.apply_filter_table_rules_1(datapath)
+        self.add_filter_table_2(datapath)
+        self.apply_filter_table_rules_2(datapath)
+
+    def add_flow(self, datapath, priority, match, actions, buffer_id=None):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
 
         inst = [parser.OFPInstructionActions(ofproto.OFPIT_APPLY_ACTIONS,
                                              actions)]
+        if buffer_id:
+            mod = parser.OFPFlowMod(datapath=datapath, buffer_id=buffer_id,
+                                    priority=priority, table_id=FORWARD_TABLE,
+                                    match=match, instructions=inst)
+        else:
+            mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
+                                    match=match, table_id=FORWARD_TABLE,
+                                    instructions=inst)
+        datapath.send_msg(mod)
 
-        mod = parser.OFPFlowMod(datapath=datapath, priority=priority,
-                                match=match, instructions=inst)
+    def add_default_table(self, datapath):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        inst = [parser.OFPInstructionGotoTable(FILTER_TABLE_1)]
+        mod = parser.OFPFlowMod(datapath=datapath, table_id=0, instructions=inst)
+        datapath.send_msg(mod)
+
+    def add_filter_table_1(self, datapath):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        inst = [parser.OFPInstructionGotoTable(FILTER_TABLE_2)]
+        mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_1, 
+                                priority=1, instructions=inst)
+        datapath.send_msg(mod)
+    
+    def add_filter_table_2(self, datapath):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        inst = [parser.OFPInstructionGotoTable(FORWARD_TABLE)]
+        mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_2, 
+                                priority=2, instructions=inst)
+        datapath.send_msg(mod)
+
+    def apply_filter_table_rules_1(self, datapath):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ip_proto=in_proto.IPPROTO_ICMP)
+        mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_1,
+                                priority=10000, match=match)
+        datapath.send_msg(mod)
+
+    def apply_filter_table_rules_2(self, datapath):
+        ofproto = datapath.ofproto
+        parser = datapath.ofproto_parser
+        match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, in_port=3)
+        mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_2,
+                                priority=5000, match=match)
+        datapath.send_msg(mod)
+        match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, in_port=4)
+        mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_2,
+                                priority=5000, match=match)
         datapath.send_msg(mod)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
     def _packet_in_handler(self, ev):
+        # If you hit this you might want to increase
+        # the "miss_send_length" of your switch
+        if ev.msg.msg_len < ev.msg.total_len:
+            self.logger.debug("packet truncated: only %s of %s bytes",
+                              ev.msg.msg_len, ev.msg.total_len)
         msg = ev.msg
         datapath = msg.datapath
         ofproto = datapath.ofproto
@@ -47,40 +111,42 @@ class Controller(app_manager.RyuApp):
 
         pkt = packet.Packet(msg.data)
         eth = pkt.get_protocols(ethernet.ethernet)[0]
-        
+
+        if eth.ethertype == ether_types.ETH_TYPE_LLDP:
+            # ignore lldp packet
+            return
+        dst = eth.dst
+        src = eth.src
+
         dpid = datapath.id
         self.mac_to_port.setdefault(dpid, {})
-        src = eth.src
-        dst = eth.dst
+
         self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
 
-        # Learn a MAC address to avoid FLOOD next time
+        # learn a mac address to avoid FLOOD next time.
         self.mac_to_port[dpid][src] = in_port
-        drop = False
-        # filter_table_1
-        if eth.ethertype == ether_types.ETH_TYPE_IP and pkt.protocol(ipv4.ipv4) == inet.IPPROTO_ICMP:
-            # filter_table_2
-            if in_port == 3 or in_port == 4:
-                drop = True
-            elif dst in self.mac_to_port[dpid]:
-                # forward table
-                out_port = self.mac_to_port[dpid][dst]
-            else:
-                out_port = ofproto.OFPP_FLOOD
+
+        if dst in self.mac_to_port[dpid]:
+            out_port = self.mac_to_port[dpid][dst]
         else:
-            # forward table
             out_port = ofproto.OFPP_FLOOD
-        
-        if drop == False:
-            # install a flow to avoid packet_in next time.
-            actions = [parser.OFPActionOutput(out_port)]
-            if out_port != ofproto.OFPP_FLOOD:
-                match = parser.OFPMatch(in_port=in_port, eth_dst=dst)
+
+        actions = [parser.OFPActionOutput(out_port)]
+
+        # install a flow to avoid packet_in next time
+        if out_port != ofproto.OFPP_FLOOD:
+            match = parser.OFPMatch(in_port=in_port, eth_dst=dst, eth_src=src)
+            # verify if we have a valid buffer_id, if yes avoid to send both
+            # flow_mod & packet_out
+            if msg.buffer_id != ofproto.OFP_NO_BUFFER:
+                self.add_flow(datapath, 1, match, actions, msg.buffer_id)
+                return
+            else:
                 self.add_flow(datapath, 1, match, actions)
+        data = None
+        if msg.buffer_id == ofproto.OFP_NO_BUFFER:
+            data = msg.data
 
-            data = None
-            if msg.buffer_id == ofproto.OFP_NO_BUFFER:
-                data = msg.data
-
-            out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, actions=actions, data=data)
-            datapath.send_msg(out)
+        out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
+                                  in_port=in_port, actions=actions, data=data)
+        datapath.send_msg(out)
