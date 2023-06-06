@@ -63,7 +63,7 @@ class SimpleSwitch13(app_manager.RyuApp):
     def add_filter_table_1(self, datapath):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
-        inst = [parser.OFPInstructionGotoTable(FILTER_TABLE_2)]
+        inst = [parser.OFPInstructionGotoTable(FORWARD_TABLE)]
         mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_1, 
                                 priority=1, instructions=inst)
         datapath.send_msg(mod)
@@ -73,27 +73,24 @@ class SimpleSwitch13(app_manager.RyuApp):
         parser = datapath.ofproto_parser
         inst = [parser.OFPInstructionGotoTable(FORWARD_TABLE)]
         mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_2, 
-                                priority=2, instructions=inst)
+                                priority=1, instructions=inst)
         datapath.send_msg(mod)
 
     def apply_filter_table_rules_1(self, datapath):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
+        inst = [parser.OFPInstructionGoToTable(FILTER_TABLE_2)]
         match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, ip_proto=in_proto.IPPROTO_ICMP)
         mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_1,
-                                priority=10000, match=match)
+                                priority=100, match=match, instructions=inst)
         datapath.send_msg(mod)
 
     def apply_filter_table_rules_2(self, datapath):
         ofproto = datapath.ofproto
         parser = datapath.ofproto_parser
-        match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, in_port=3)
+        match = parser.OFPMatch(in_port=3)
         mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_2,
-                                priority=5000, match=match)
-        datapath.send_msg(mod)
-        match = parser.OFPMatch(eth_type=ether_types.ETH_TYPE_IP, in_port=4)
-        mod = parser.OFPFlowMod(datapath=datapath, table_id=FILTER_TABLE_2,
-                                priority=5000, match=match)
+                                priority=100, match=match)
         datapath.send_msg(mod)
 
     @set_ev_cls(ofp_event.EventOFPPacketIn, MAIN_DISPATCHER)
