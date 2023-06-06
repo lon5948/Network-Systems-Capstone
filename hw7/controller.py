@@ -49,6 +49,7 @@ class Controller(app_manager.RyuApp):
         eth = pkt.get_protocols(ethernet.ethernet)[0]
         
         dpid = datapath.id
+        self.mac_to_port.setdefault(dpid, {})
         src = eth.src
         dst = eth.dst
         self.logger.info("packet in %s %s %s %s", dpid, src, dst, in_port)
@@ -61,9 +62,11 @@ class Controller(app_manager.RyuApp):
             # filter_table_2
             if in_port == 3 or in_port == 4:
                 drop = True
-            else:
+            elif dst in self.mac_to_port[dpid]:
                 # forward table
                 out_port = self.mac_to_port[dpid][dst]
+            else:
+                out_port = ofproto.OFPP_FLOOD
         else:
             # forward table
             out_port = ofproto.OFPP_FLOOD
@@ -79,6 +82,5 @@ class Controller(app_manager.RyuApp):
             if msg.buffer_id == ofproto.OFP_NO_BUFFER:
                 data = msg.data
 
-            out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id,
-                                    match=match, actions=actions, data=data)
+            out = parser.OFPPacketOut(datapath=datapath, buffer_id=msg.buffer_id, actions=actions, data=data)
             datapath.send_msg(out)
