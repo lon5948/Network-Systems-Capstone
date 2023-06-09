@@ -18,3 +18,9 @@ Using QUIC’s headers and frame structure to implement the following functions 
 - Error control
 - Flow control
 - Congestion control
+
+### hw6
+Design and implement a pair of web client program and web server program that support the HTTP 1.0, HTTP 1.1, HTTP 2.0 protocols and HTTP 3.0 protocols, respectively.
+
+### hw7
+For this Mininet-based SDN implementation task, you need to write a python program to create the network topology and a controller that implements crucial functions.
