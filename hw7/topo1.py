@@ -18,11 +18,5 @@ class MyTopo(Topo):
         # Add links
         for i in range(4):
             self.addLink(hosts[i], switch)
+            
 topos = {'mytopo': (lambda: MyTopo())}
-#net = Mininet(topo=MyTopo(), controller=None)
-#controller_ip = sys.argv[1] if len(sys.argv) > 1 else '127.0.0.1'
-#controller = net.addController('c0', controller=RemoteController, ip='127.0.0.1', port=6633)
-#net.start()
-#controller.start()
-#net.interact()
-# topos = {'mytopo': (lambda: MyTopo())}
